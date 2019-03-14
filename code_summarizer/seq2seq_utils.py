@@ -327,21 +327,20 @@ class Seq2Seq_Inference(object):
         """
         Prints an example of the model's prediction for manual inspection.
         """
-        if i>-1:
+        if i:
             print('\n\n==============================================')
             print(f'============== Example # {i} =================\n')
 
         if url:
             print(url)
 
-        print(f"Code:\n {input_text} \n")
+        print(f"Original Input:\n {input_text} \n")
 
         if output_text:
-            print(f"Original Docstring:\n {output_text}")
+            print(f"Original Output:\n {output_text}")
 
         emb, gen_title = self.predict(input_text)
-        print(f"\n****** Predicted Docstring ******:\n {gen_title}")
-        print("\n")
+        print(f"\n****** Predicted Output ******:\n {gen_title}")
 
 
     def demo_model_predictions(self,
@@ -369,13 +368,14 @@ class Seq2Seq_Inference(object):
         input_text = df[input_col].tolist()
         output_text = df[output_col].tolist()
         url = df[ref_col].tolist()
-        print("\n================= BEGIN Prediction Examples ======================")
-        #demo_list = np.random.randint(low=1, high=len(input_text), size=n)
-        #for i in demo_list:
-        for i in range(0, n):
-            self.print_example(i, input_text=input_text[i], output_text=output_text[i], url=url[i], threshold=threshold)
 
-        print("\n================= END Prediction Examples ======================\n\n")
+        demo_list = np.random.randint(low=1, high=len(input_text), size=n)
+        for i in demo_list:
+            self.print_example(i,
+                               input_text=input_text[i],
+                               output_text=output_text[i],
+                               url=url[i],
+                               threshold=threshold)
 
     def evaluate_model(self, input_strings, output_strings, max_len):
         """
