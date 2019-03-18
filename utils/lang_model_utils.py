@@ -63,7 +63,7 @@ class lm_vocab:
 
     def fit(self, data: List) -> None:
         "Fit vocabulary to a list of documents."
-        logging.warning(f'Processing {len(data):,} rows')
+        #logging.warning(f'Processing {len(data):,} rows')
         # build vocab
         trn = list_flatten([(self.bos_token + ' ' + x).split() for x in data])
         freq = Counter(trn)
@@ -113,7 +113,7 @@ class lm_vocab:
             The maximum length of any sequence allowed.  Sequences will be truncated
             and pre-padded to this length.
         """
-        logging.warning(f'Processing {len(data):,} rows')
+        #logging.warning(f'Processing {len(data):,} rows')
         idx_docs = [[self.stoi[self.bos_token]] + [self.stoi[word] for word in sent.split()[:max_seq_len]] for sent in data]
         # default keras pad_sequences pre-pads to max length with zero
         if padding:
