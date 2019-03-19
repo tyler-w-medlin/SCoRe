@@ -48,7 +48,6 @@ def summarize_function(seq2seq_inf, input_code):
     to summarize the input code
 
     Input: Seq2Seq_Inference object, input code string
-
     Returns: predicted docstring
 
     """
@@ -56,6 +55,14 @@ def summarize_function(seq2seq_inf, input_code):
     return gen_docstring
 
 def summarize_dataset(code_summarizer, all_functions_path, outfile_path):
+    """
+    Generates docstrings for the entire all_functions dataset
+
+    Input: seq2seq_inf object, path to all_functions dataset, path to output folder
+    Returns: -----
+    Output: file of all generated docstrings for input dataset. generated_docstrings.docstring
+
+    """
     #read in function file
     loadpath = Path(all_functions_path)
     with open(loadpath/'all_functions.function') as in_file:

@@ -13,19 +13,31 @@ sys.path.append('../')
 from utils.general_utils import apply_parallel, flattenlist
 
 def tokenize_docstring(text):
-    "Apply tokenization using spacy to docstrings."
+    """
+    Apply tokenization using spacy to docstrings.
+    Input: string
+    Returns: string tokens
+    """
     EN = spacy.load('en')
     tokens = EN.tokenizer(text)
     return [token.text.lower() for token in tokens if not token.is_space]
 
 
 def tokenize_code(text):
-    "A very basic procedure for tokenizing code strings."
+    """
+    A very basic procedure for tokenizing code strings.
+    Input: string containing code
+    Output: tokenized code
+    """
     return RegexpTokenizer(r'\w+').tokenize(text)
 
 
 def get_function_docstring_pairs(blob):
-    "Extract (function/method, docstring) pairs from a given code blob."
+    """
+    Extract (function/method, docstring) pairs from a given code blob.
+    Input: string containing python file
+    Return: function/docstring pairs
+    """
     pairs = []
     try:
         module = ast.parse(blob)
@@ -51,28 +63,53 @@ def get_function_docstring_pairs(blob):
 
 
 def get_function_docstring_pairs_list(blob_list):
-    """apply the function `get_function_docstring_pairs` on a list of blobs"""
+    """
+    apply the function `get_function_docstring_pairs` on a list of blobs
+    Input: list of strings containing python files
+    Return: list of function/docstring pairs
+    """
     return [get_function_docstring_pairs(b) for b in blob_list]
 
 
 def listlen(x):
+    """
+    Return length of list if the input is a valid list
+    Input: list
+    Return: length of list
+    """
     if not isinstance(x, list):
         return 0
     return len(x)
 
 
 def write_to(df, filename, path):
-    "Helper function to write processed files to disk."
+    """
+    Helper function to write processed files to disk.
+    Input: dataframe, name of output file, path to output folder
+    Return: -----
+    Output: filename.function, filename_original_function.json.gz, filename.lineage
+    """
     out = Path(path)
     out.mkdir(exist_ok=True)
     df.function_tokens.to_csv(out/'{}.function'.format(filename), index=False)
     df.original_function.to_json(out/'{}_original_function.json.gz'.format(filename), orient='values', compression='gzip')
-    # if filename != 'without_docstrings':
-    #     df.docstring_tokens.to_csv(out/'{}.docstring'.format(filename), index=False)
     df.url.to_csv(out/'{}.lineage'.format(filename), index=False)
 
 
 def process_data(raw_data_path, outfile_path):
+    """
+    Processes the raw data in the csv file of python projects,
+    decomposes the projects into their underlying functions, strips the functions,
+    writes them them to a .function file, writes the original functions to a .json,
+    and writes the path to the parent file to a .lineage file
+
+    Input: path to folder containing raw data csv, path to folder for output file
+
+    Returns: -----
+
+    Outputs: all_functions.function, all_functions_original_function.json.gz, all_functions.lineage
+
+    """
     print('\nProcessing data...\n')
 
     loadpath = Path(raw_data_path)
@@ -93,13 +130,12 @@ def process_data(raw_data_path, outfile_path):
     df['pairs'] = pairs
     df.head()
 
-
     # flatten pairs
     df = df.set_index(['nwo', 'path'])['pairs'].apply(pd.Series).stack()
     df = df.reset_index()
     df.columns = ['nwo', 'path', '_', 'pair']
 
-
+    #reshape the database
     df['function_name'] = df['pair'].apply(lambda p: p[0])
     df['lineno'] = df['pair'].apply(lambda p: p[1])
     df['original_function'] = df['pair'].apply(lambda p: p[2])
@@ -108,7 +144,6 @@ def process_data(raw_data_path, outfile_path):
     df = df[['nwo', 'path', 'function_name', 'lineno', 'original_function', 'function_tokens', 'docstring_tokens']]
     df['url'] = df[['nwo', 'path', 'lineno']].apply(lambda x: '/{}#L{}'.format(x[1], x[2]), axis=1)
     df.head()
-
 
     # remove observations where the same function appears more than once
     before_dedup = len(df)
@@ -120,5 +155,4 @@ def process_data(raw_data_path, outfile_path):
     df.shape
 
     print(f'All functions rows {df.shape[0]:,}')
-
     write_to(df, 'all_functions', outfile_path)

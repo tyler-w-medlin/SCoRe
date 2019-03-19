@@ -31,6 +31,7 @@ def load_encoder(vocab_path, lang_model_path):
 
     return lang_encoder
 
+
 def encode(lang_encoder, input_string):
     """
         Reads in a string and returns the embedding
@@ -41,6 +42,7 @@ def encode(lang_encoder, input_string):
 
     """
     return lang_encoder.emb_mean(input_string)
+    
 
 def embed_dataset(lang_encoder, raw_docstrings_path, outfile_path):
     """
@@ -67,9 +69,3 @@ def embed_dataset(lang_encoder, raw_docstrings_path, outfile_path):
     #save embeddings to output file
     loadpath = Path(outfile_path)
     np.save(loadpath/'dataset_embedding.npy', avg_hs)
-
-# '../data/lang_model/vocab_v2.cls' - vocab
-# '../data/lang_model/lang_model_cpu_v2.torch' - model
-
-# '../data/lang_model_emb/avg_emb_dim500_test_v2.npy' - docstring embeddings
-# '../data/lang_model_emb/new_dim500_avg_searchindex.nmslib' - search index
