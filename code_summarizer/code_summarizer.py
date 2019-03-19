@@ -1,12 +1,14 @@
 import logging
 from pathlib import Path
 from keras.models import Model, load_model
-from seq2seq_utils import load_text_processor, Seq2Seq_Inference
 import tensorflow as tf
 import os
 import warnings
+import sys
+sys.path.append('../')
+from utils.seq2seq_utils import load_text_processor, Seq2Seq_Inference
 
-def load_Summarizer():
+def load_summarizer(seq2seq_model_path, text_processor_path):
     """
     Loads the code summarizer model and returns the interference object
     to be used for predicting docstrings.
@@ -22,24 +24,17 @@ def load_Summarizer():
     os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
     warnings.filterwarnings("ignore")
 
-    OUTPUT_PATH = Path('../data/seq2seq/')
-    OUTPUT_PATH.mkdir(exist_ok=True)
-    OUTPUT_PATH = '../data/seq2seq/'
-
     logging.warning('Loading pre-trained model...')
     # Load model
-    loc = OUTPUT_PATH + 'py_func_sum_v9_.epoch16-val2.55276.hdf5'
-    seq2seq_Model = load_model(loc)
+    seq2seq_Model = load_model(seq2seq_model_path + '/py_func_sum_v9_.epoch16-val2.55276.hdf5')
 
     logging.warning('Loading text processor (encoder)...')
     # Load encoder (code) pre-processor
-    loc = OUTPUT_PATH + 'py_code_proc_v2.dpkl'
-    num_encoder_tokens, enc_pp = load_text_processor(loc)
+    num_encoder_tokens, enc_pp = load_text_processor(text_processor_path + '/py_code_proc_v2.dpkl')
 
     logging.warning('Loading text processor (decoder)...')
     # Load decoder (docstrings/comments) pre-processor
-    loc = OUTPUT_PATH + 'py_comment_proc_v2.dpkl'
-    num_decoder_tokens, dec_pp = load_text_processor(loc)
+    num_decoder_tokens, dec_pp = load_text_processor(text_processor_path + '/py_comment_proc_v2.dpkl')
 
     seq2seq_inf = Seq2Seq_Inference(encoder_preprocessor=enc_pp,
                                      decoder_preprocessor=dec_pp,
@@ -47,15 +42,32 @@ def load_Summarizer():
 
     return seq2seq_inf
 
-def summarize(seq2seq_inf, input_code):
-        """
-        Calls the predict() function on the Seq2Seq_Inference object
-        to summarize the input code
+def summarize_function(seq2seq_inf, input_code):
+    """
+    Calls the predict() function on the Seq2Seq_Inference object
+    to summarize the input code
 
-        Input: Seq2Seq_Inference object, input code string
+    Input: Seq2Seq_Inference object, input code string
 
-        Returns: predicted docstring
+    Returns: predicted docstring
 
-        """
-        emb, gen_docstring = seq2seq_inf.predict(input_code)
-        return gen_docstring
+    """
+    emb, gen_docstring = seq2seq_inf.predict(input_code)
+    return gen_docstring
+
+def summarize_dataset(code_summarizer, all_functions_path, outfile_path):
+    #read in function file
+    loadpath = Path(all_functions_path)
+    with open(loadpath/'all_functions.function') as in_file:
+      lineList = in_file.readlines()
+
+    #create and open output file
+    loadpath = Path(outfile_path)
+    out_file= open(loadpath/"generated_docstrings.docstring","w+")
+
+    #write summaries to out file
+    for line in lineList:
+        out_file.write(summarize_function(code_summarizer, line) + '\n')
+
+    #close out file
+    out_file.close()

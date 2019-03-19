@@ -1,0 +1,4326 @@
+repo_path,content
+Facial_Recognition_UNG Facial_Recognition_UNG/generator-v2.py,"import sys, getopt
+import math
+import array
+import os
+
+
+raw_data=[] #list hold all numbers
+list_args = [] #list holds cmd arguments
+fileNames = [] # hold all file names for readInput function
+results = [] # hold all unique raw_data - final result.
+picData = [] #hold all number of 1 picture
+numOfPic = 0
+UniNum = 0
+directory = """"
+
+
+#get cmd args into an array
+#cmd args: FaceLandmarkImg, number of image
+def cmdArguments():
+    for arg in sys.argv:
+        list_args.append(arg) #put command line args into a list
+        
+#read all numbers of each image
+#put in the same array, convert into float type
+def readInput(fileNames):
+    lineNum = 0
+    global numOfPic
+    global pointOfPic
+    numOfPic = -1
+    for name in fileNames:
+        with open(name) as lines:
+            lineNum = 0       
+            raw_data.append([])
+            numOfPic = numOfPic + 1
+            for line in lines:
+                lineNum = lineNum + 1
+                if lineNum > 3 and lineNum < 72: # just read in the numbers
+                    a = line.split() #split by ""space"" for each input line- read in str NOT int
+                    for n in range(0, len(a)):
+                        a[n] = float(a[n])
+                        raw_data[numOfPic].append(a[n])
+
+#create list of file names for readInput function
+#number of file names base on the number on cmd line.
+#all file names are in fileNames array
+def inputFileName():
+    for name in os.listdir(list_args[1]):
+        fileNames.append(list_args[1] + ""//"" + name)
+
+def UNGenerator():
+    global breakPoint
+    global UniNum
+    global numOfPoint
+
+    for i in range(0, len(raw_data)):
+        for n in range(0,len(raw_data[i])):
+            raw_data[i][n] = (math.atan(raw_data[i][n]) + (math.pi /2))
+        for n in range(0,len(raw_data[i])):
+            UniNum += (10^n) * raw_data[i][n]
+        results.append(UniNum)
+        UniNum = 0
+    
+#unique number for pic
+#print out the result
+#results array holds all unique numbers
+def UNforPic():
+    for x in range(0, len(results)):
+        print (fileNames[x] + ""- Unique ID: ""+ str(results[x]))
+
+    with open(""Output.txt"", ""w"") as text_file:
+        for x in range(0, len(results)):
+            text_file.write(fileNames[x] + ""- Unique ID: ""+ str(results[x]) + ""/n"")
+
+def testing():
+    duplicate = ""No duplicate""
+    for x in range(0, len(results)):
+        for y in range(x+1, len(results)):
+            if results[x] == results[y]:
+                duplicate = ""Duplicate""
+    print(duplicate)
+    
+    
+#main
+cmdArguments()
+inputFileName()
+readInput(fileNames)
+
+##print(raw_data[2])
+UNGenerator()
+UNforPic()
+testing()
+##for m in range(0, len(fileNames)):
+##    print(fileNames[m])
+"
+FandRec FandRec/HSV_Background/demo.py,"import sys, cv2, os, time, dlib, imutils
+from gesture import HandGestureRecognition
+import numpy as np
+from imutils.video import WebcamVideoStream
+
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+#cam = WebcamVideoStream(src=0).start()
+cam = cv2.VideoCapture(0)
+cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+path_model = ""hand_classifier.caffemodel""
+path_proto = ""hand_classifier.prototxt""
+net = cv2.dnn.readNetFromCaffe(path_proto, path_model)
+rec = HandGestureRecognition()
+background = None
+num_frames = 0
+
+def runAverage(frame):
+        #frame = cv2.medianBlur(frame,5)        
+        #frame = cv2.GaussianBlur(frame, (5, 5), 0)
+        #frame = cv2.equalizeHist(frame)
+        global num_frames, background
+        if num_frames < 30:
+            if background is None:
+                background = frame.copy().astype(""float"")
+                
+            cv2.accumulateWeighted(frame, background, 0.5)
+            num_frames += 1
+
+
+def deepHand(image):
+    d = 227
+    image = cv2.resize(image, (d,d))
+    blob = cv2.dnn.blobFromImage(image, 1.0, (d,d), (104.0,177.0,123.0))
+    net.setInput(blob)
+    results = net.forward()
+    return results[0]
+
+while (True):
+    #frame = cam.read()
+    _, frame = cam.read()
+    frame = cv2.flip(frame, 1)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    h = hsv[:,:,0]
+    #h = cv2.equalizeHist(h)
+    #h = cv2.medianBlur(h,3)
+    #h = cv2.GaussianBlur(h, (3, 3), 100)
+    runAverage(h)
+    
+    cv2.rectangle(frame, (350,50), (600,300), (255,0,0), 2)
+    
+    roi = h[50:300,350:600]
+    
+    difference = cv2.absdiff(background.astype(""uint8"")[50:300,350:600],
+                             roi)
+    foreground = cv2.threshold(difference, 3, 255, cv2.THRESH_BINARY)[1]
+    try:
+        gest, foreground = rec.recognize(foreground, frame[50:300,350:600])
+        frame[50:300,350:600] = foreground
+    except:
+        pass
+    
+    frame = cv2.resize(frame, (1280,1024))
+    cv2.imshow(""Cam feed"", frame)
+    cv2.waitKey(33)
+
+##def bgDetect():
+##    return
+"
+FandRec FandRec/HSV_Background/gesture.py,"import cv2
+import numpy as np
+import math
+
+class HandGestureRecognition:
+    """"""
+    """"""
+    
+    def __init__(self):
+        """"""
+        """"""
+        self.kernel = kernel = np.ones((3,3),np.uint8)
+        self.angle_cuttoff = 80.0
+
+    def recognize(self, img, disp):
+        """"""
+        """"""
+        segment = self._segmentHand(img)
+        
+        contours, defects = self._findHullDefects(segment)
+        return self._detectGesture(contours, defects, disp)
+
+    def _segmentHand(self, img):
+        """"""
+        """"""
+        
+        
+        mask = cv2.erode(img, self.kernel, iterations = 2)
+        mask = cv2.dilate(mask, self.kernel, iterations = 2)
+        mask = cv2.GaussianBlur(mask,(3,3),100)
+        mask = cv2.erode(mask, self.kernel, iterations = 2)
+        mask = cv2.dilate(mask, self.kernel, iterations = 2)
+        mask = cv2.GaussianBlur(mask,(3,3),0)
+        mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)[1]
+        cv2.imshow(""Mask"", mask)
+        return mask
+        
+    def _findHullDefects(self, segment):
+        """"""
+        """"""
+        _,contours,hierarchy = cv2.findContours(segment,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        max_contour = max(contours, key = lambda x: cv2.contourArea(x))
+        epsilon = 0.01*cv2.arcLength(max_contour, True)
+        max_contour = cv2.approxPolyDP(max_contour, epsilon, True)
+
+        hull = cv2.convexHull(max_contour, returnPoints=False)
+        defects = cv2.convexityDefects(max_contour, hull)
+
+        return (max_contour, defects)
+
+    def _detectGesture(self, contours, defects, img):
+        """"""
+        """"""
+        if defects is None:
+            return ['0', img]
+
+        if len(defects) <= 2:
+            return ['0', img]
+
+        num_fingers = 1
+
+        for i in range(defects.shape[0]):
+            start_idx, end_idx, farthest_idx, _ = defects[i,0]
+            start = tuple(contours[start_idx][0])
+            end = tuple(contours[end_idx][0])
+            far = tuple(contours[farthest_idx][0])
+
+            cv2.line(img, start, end, [0, 255, 0], 2)
+
+            if angleRad(np.subtract(start, far),
+                        np.subtract(end, far)) < deg2Rad(self.angle_cuttoff):
+                num_fingers += 1
+
+                # draw point as green
+                cv2.circle(img, far, 5, [0, 255, 0], -1)
+            else:
+                # draw point as red
+                cv2.circle(img, far, 5, [0, 0, 255], -1)
+
+        return (min(5, num_fingers), img)
+
+def angleRad(v1, v2):
+    """"""Convert degrees to radians
+    This method converts an angle in radians e[0,2*np.pi) into degrees
+    e[0,360)
+    """"""
+    return np.arctan2(np.linalg.norm(np.cross(v1, v2)), np.dot(v1, v2))
+    
+def deg2Rad(angle_deg):
+    """"""Angle in radians between two vectors
+    returns the angle (in radians) between two array-like vectors
+    """"""
+    return angle_deg/180.0*np.pi
+    
+"
+FandRec FandRec/kinect2/database/DBHelper.py,"""""""
+	Created by Trenton Scott
+	Created on 02/23/2018
+	Purpose: The purpose of this class is to assist with database interaction 
+	on the FandRec client. 
+""""""
+
+import sqlite3, random, hashlib
+
+class DBHelper:
+	global conn
+	global curr 
+	global keepConnOpen
+	
+	def __init__(self, active = False):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: N/A
+			Description: Initializes DBHelper
+			Usage: DBHelper(active)
+				active	--	if True the database connection will stay open until
+							closed. If false, the database connection will close 
+							after 1 transaction. 
+		
+		""""""
+		
+		self.db_connect()
+		try:
+			conn.execute(""SELECT * FROM Users"")
+		except:
+			#if the above throws an error, the table does not exist and will be created. 
+			#this should only occurs during initial setup. 
+			conn.execute(""CREATE TABLE Users ( ID INTEGER PRIMARY KEY, Username varchar(20) UNIQUE, Password varchar(20),""
+			""Salt varchar(16), HUB_ID varchar(50), NET_ID varchar(50), ACU_ID varchar(20), ACCESS_KEY varchar(20))"")
+			try:
+				conn.execute(""SELECT * FROM Gestures"")
+			except:
+				#if the above throws an exception, here we will assume the table is corrupt or
+				#not available. 
+				conn.execute(""CREATE TABLE Gestures (Username varchar(20), Gesture varchar(10), Function varchar(25))"")
+				
+		global keepConnOpen
+		keepConnOpen = active;
+		
+		
+	def db_connect(self):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: N/A
+			Description: Connected to database
+			Usage: This function should only be called by 
+		""""""
+		#connect to the database. 
+		try:
+			global conn
+			conn = sqlite3.connect('database/database.db')
+		except:
+			print(""An error was encountered while trying to connect to the database. "")
+		global curr
+		curr = conn.cursor()	
+
+	def createUser(self, credentials):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: Boolean
+			Description: Stores new user in the database. 
+			Usage: DBHelper.createUser([username, password, hub-id, net-id])
+		
+		""""""
+		CHARS = ""0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ""
+		salt= """"
+		for i in range(16):
+			salt += random.choice(CHARS)
+		
+		encodedPass = (credentials[1] + salt).encode()
+		sec_pass = hashlib.sha256(encodedPass)
+		
+		HUB_ID = credentials[2]
+		NET_ID = credentials[3]
+		ACU_ID = credentials[4]
+		ACCESS_KEY = credentials[5]
+
+
+		try:
+			conn.execute(""INSERT INTO Users (Username, Password, Salt, HUB_ID, NET_ID, ACU_ID, ACCESS_KEY) VALUES (?,?,?,?,?,?,?)"", (credentials[0], str(sec_pass.hexdigest()), salt, HUB_ID, NET_ID, ACU_ID, ACCESS_KEY))
+			conn.commit()
+			return True
+		except sqlite3.IntegrityError:
+			return False
+
+		if not keepConnOpen: self.disconnect()
+
+	def authenticate(self, credentials):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: Boolean
+			Description: Returns true on successful authentication 
+			Usage: DBHelper.getUsernames()
+		
+		""""""
+		username = credentials[0]
+		password = credentials[1]
+
+		
+		try: 
+			try:
+				curr.execute(""SELECT Salt FROM Users WHERE Username=?"", (username,))
+				salt = curr.fetchone()[0]
+				encodedPass = (password + salt).encode()
+				testHash = hashlib.sha256(encodedPass).hexdigest()
+
+				curr.execute(""SELECT Password FROM Users WHERE Username=?"", (username,))
+
+				storedHash = curr.fetchone()[0]
+			except:
+				return False
+
+			if (testHash == storedHash):
+				return True
+			else:
+				return False
+
+		except:
+			print(""Could not execute query on database. The database could be closed. "")
+		if not keepConnOpen: self.disconnect()
+
+		
+		
+	def getUsernames(self):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: List [String, ...]
+			Description: Returns username from database based on ID. 
+			Usage: DBHelper.getUsernames()
+		
+		""""""
+		curr.execute(""SELECT Username from Users"");
+		userList = []
+		usernames = curr.fetchall()
+		if not keepConnOpen: self.disconnect()
+		for x in usernames:
+			userList.append(x[0])
+		return userList
+
+	def getUsernameById(self, ID):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns username from database based on ID. 
+			Usage: DBHelper.getUserNameById(Integer)
+		
+		""""""
+		curr.execute(""SELECT Username FROM Users WHERE ID=?"", (ID,))
+		try:
+			return curr.fetchone()[0]
+		except: 
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+	def getIDByUsername(self, username):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns ID from database based on username. 
+			Usage: DBHelper.getIdByUsername(String)
+		
+		""""""
+		curr.execute(""SELECT ID FROM Users WHERE Username=?"", (username,))
+		try: 
+			return curr.fetchone()[0]
+		except:
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+	def getHubIdByUsername(self, username):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns Hub ID from database based on username.  
+			Usage: DBHelper.getHubIdByUsername(Integer)
+		
+		""""""
+		curr.execute(""SELECT HUB_ID FROM Users WHERE Username=?"", (username,))
+		try: 
+			return curr.fetchone()[0]
+		except:
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+	def getNetIdByUsername(self, username):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns Net ID from database based on username. 
+			Usage: DBHelper.getUserNameById(Integer)
+		
+		""""""
+		curr.execute(""SELECT NET_ID FROM Users WHERE Username=?"", (username,))
+		try: 
+			return curr.fetchone()[0]
+		except:
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+	def getACUByUsername(self, username):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns ACU ID from database based on username. 
+			Usage: DBHelper.getUserNameById(Integer)
+		
+		""""""
+		curr.execute(""SELECT ACU_ID FROM Users WHERE Username=?"", (username,))
+		try: 
+			return curr.fetchone()[0]
+		except:
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+	def getAccessKeyByUsername(self,username):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns access key from database based on username. 
+			Usage: DBHelper.getUserNameById(Integer)
+		
+		""""""
+		curr.execute(""SELECT ACCESS_KEY FROM Users WHERE Username=?"", (username,))
+		try: 
+			return curr.fetchone()[0]
+		except:
+			return ""NoUserExists""
+		if not keepConnOpen: self.disconnect()
+		
+		
+	#***************************Gesture Information********************************
+	def addGesture(self, username, gesture, function):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: Boolean
+			Description: Returns list of gestures  
+			Usage: DBHelper.addGesture(String username, String gesture_name, String function)
+			
+		""""""
+		
+		try:
+			conn.execute(""DELETE FROM Gestures WHERE Username=? AND Gesture=?"", (username, gesture,))
+			#above line removes the gesture if it current exists 
+			conn.execute(""INSERT INTO Gestures (Username, Gesture, Function) VALUES (?,?,?)"", (username, gesture, function))
+			conn.commit()
+			return True
+		except:
+			return False
+		
+	def getGesturesByUsername(self, username):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: List [Tuple, ...]
+			Description: Returns list of gestures  
+			Usage: DBHelper.getGesturesByUsername(String)
+			
+		""""""
+		try: 
+			curr.execute(""SELECT Gesture, Function FROM Gestures WHERE Username=?"", (username, ));
+			gestures = curr.fetchall()
+			if not keepConnOpen: self.disconnect()
+			return gestures
+		except:
+			return None
+			
+	def getGestureFunction(self, username, gesture):
+		""""""
+		
+			Created by Trenton D Scott
+			Output: String
+			Description: Returns gesture function based on username and gesture. 
+			Usage: DBHelper.getGesture(String username, Integer gesture)
+			
+		""""""
+		try: 
+			curr.execute(""SELECT Function FROM Gestures WHERE Username=? AND Gesture=?"", (username, gesture, ));
+			gesture = curr.fetchone()[0]
+			if not keepConnOpen: self.disconnect()
+			return gesture
+		except:
+			return None
+			
+	def dump_table(self):
+		""""""
+			
+			Created by Trenton D Scott
+			Output: List [String, ...]
+			Description: Returns username from database based on ID. 
+			Usage: DBHelper.getUsernames()
+		
+		""""""
+		curr.execute(""SELECT * from Users"");
+		data = curr.fetchall()
+		print(data)
+		
+	def disconnect(self):
+		conn.close()
+"
+FandRec FandRec/kinect2/application.py,"""""""
+Project: Project FandRec
+Last Modified: 11/21/2017
+Description: Takes in a frame and finds faces in the picture. If the frame contains a face that has been registered,
+                         it will also check next to the face for fingers held up. If the number of fingers is mapped to action to be
+                         taken then a tag will be sent to CoMPES to tell it what to do.
+Notes:
+        1. The camera client must be running on the camera for it to connect to this server, the server must be running first.
+
+
+
+Liscense:
+Copyright (c) 2018, FandRec Dev Team
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+        * Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above copyright
+          notice, this list of conditions and the following disclaimer in the
+          documentation and/or other materials provided with the distribution.
+        * Neither the name of the FandRec Dev Team nor the
+          names of its contributors may be used to endorse or promote products
+          derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ""AS IS"" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL FandRec Dev Team BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+""""""
+#==============================Imports=======================================
+import sys, ujson, cv2, numpy as np, base64
+
+from twisted.python import log
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.wsgi import WSGIResource
+
+from autobahn.twisted.websocket import WebSocketClientFactory, /
+         WebSocketServerFactory, WebSocketClientProtocol, /
+         WebSocketServerProtocol, connectWS, listenWS
+from recognition import *
+
+from flask import Flask, render_template, request as flask_request, make_response
+
+app = Flask(__name__)
+
+#~~~~~~~~~~~~ Database Import ~~~~~~~~~~~~#
+
+from database import DBHelper
+DBHelper = DBHelper.DBHelper
+
+#==========================Global Variables==================================
+
+ip_address = ""0.0.0.0""
+port_nums = [8090, 8091, 8073]
+compes_ip = ""192.168.86.85""
+compes_ip = ""ws://localhost:9000"" #reassigning for using the test hub. 
+
+app = Flask(__name__)
+
+        
+#==========================Web Server========================================
+
+class WebComms():
+        def __init__(self, url):
+                #STEP-1: Start up the camera listener
+                self.cam_factory = CameraFactory(url + str(port_nums[1]), self)
+                
+                #STEP-2: Start up webpage
+                self.web_factory = WebFactory(url + ""8092"", self)
+                
+                listenWS(self.web_factory)
+                listenWS(self.cam_factory)
+                
+                self.compes_factory = None
+                
+                self.user = None
+                self.camera = None
+                self.SRO = None
+                
+                
+        def registerUser(self, username, password, net_id, hub_id, acu_id, access_key, camera_name = 'camera1'):
+                #add camera name variable
+                #send to CoMPES
+                self.compes_factory = HubClientFactory(""ws://127.0.0.1:9000"", self, head={'user-id': username, 'pass': password, 'net-id': net_id, 'hub-id': hub_id,'acu-id': acu_id ,'access-key' : access_key})
+                connectWS(self.compes_factory)
+                self.user = username
+                self.camera = camera_name
+                return self.SRO
+                
+        def getSRO(self):
+                if self.SRO is not None:
+                        return self.SRO #gets only the states (or functions)
+                else:
+                        print(""No SRO!"")
+                        
+        def sendTag(self, tag):
+                self.compes_factory.post(tag)
+
+
+class WebsiteServerProtocol(WebSocketServerProtocol):
+        """"""
+        Programmed by: David Williams and Jake Thomas
+        Description: Handles the connections from clients that are requesting to connect the server.
+        """"""
+        def __init__(self):
+                WebSocketServerProtocol.__init__(self)
+                self.connected = False
+
+        def onConnect(self, request):
+                """"""
+                Programmed by: David Williams
+                Description: Prints the web socket request
+                """"""
+                self.cameraName = self.factory.bridge.camera
+                self.connected = True
+                
+                self.factory.connect(""client1"", self)
+
+                print(""WebSocket connection request: {}"".format(request.peer))
+
+        def onOpen(self):
+                print(""Connection to client opened!"")
+
+        def onMessage(self, data, isBinary):
+                data = ujson.loads(data.decode(""UTF8""))
+                #self..clientName = data.decode(""UTF8"")
+                self.factory.connect(self.clientName, self)
+
+
+        def onClose(self, wasClean, code, reason):
+                self.connected = False
+                self.factory.disconnect(""client1"")
+                print(""Connection to client was closed!"")
+
+class WebFactory(WebSocketServerFactory):
+        protocol = WebsiteServerProtocol
+        def __init__(self, url, bridge):
+                WebSocketServerFactory.__init__(self, url)
+                self.frame = None
+                self.connections = {}
+                self.bridge = bridge
+
+        def connect(self, clientName, connection):
+                #if (clientName not in self.connections):
+                self.connections[clientName] = connection
+                
+        def disconnect(self, clientName):
+                if (""client1"" in self.connections):
+                        del self.connections[""client1""]
+                else:
+                        print(""Nothing to delete matching client name. "")
+
+        def post(self, clientName, message):
+                try: 
+                        self.connections[""client1""].sendMessage(message)
+                except:
+                        print(""No client connected"")
+                
+
+#==========================Camera Server=====================================
+class CameraServerProtocol(WebSocketServerProtocol):
+        """"""
+        Programmed by: David Williams
+        Description: Takes in the frames from the camera client, decompresses it and stores it in the queue.
+        """"""
+
+        def onConnect(self, request):
+                """"""
+                Description: Prints the connection that was made with the client
+                """"""
+                self.clientName = request.headers['camera_id']
+                self.factory.connect(self.clientName, self)
+                print(""WebSocket connection request: {}"".format(request.peer))
+
+        def onOpen(self):
+                """"""
+                Description: Prints the connection that was made with the client
+                """"""
+                print(""Connection to camera_client opened."")
+
+        def onMessage(self, data, isBinary):
+                """"""
+                Description: Decodes the image sent from the camera 
+                """"""
+                #STEP 1: Load in, convert, and decompress frame for use
+                frame = ujson.loads(data.decode(""utf8""))
+                frame = np.asarray(frame, np.uint8)
+                frame = cv2.imdecode(frame, cv2.IMREAD_GRAYSCALE)
+                #post users client name here. 
+                
+                #frame = message
+                
+                if (self.factory.bridge.user is not None):
+                        print(self.factory.bridge.user)
+                        frame, username, gesture = self.factory.rec.processFrame(frame, self.factory.bridge.user)
+                        if (gesture != '0'): #gesture is '0' by default
+                                db = DBHelper(True)
+                                gest_func = db.getGestureFunction(username, ""gest_"" + str(gesture))
+
+                                acu = db.getACUByUsername(username)
+                                tag = acu + "",,"" + str(gest_func)
+                                if gest_func != None:
+                                        self.factory.bridge.sendTag(tag)
+                        
+                if (self.factory.rec.is_registering == False and self.factory.rec.reg_complete == True):
+                        self.factory.bridge.web_factory.connections[""client1""].sendMessage(""registration"".encode(""UTF8""))
+                frame = cv2.UMat(frame)
+                frame = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 20])[1]
+                frame = base64.b64encode(frame)
+                
+                #send to web factory
+                self.factory.bridge.web_factory.post(self.factory.bridge.user, frame)
+
+        def onClose(self, wasClean, code, reason):
+                self.factory.disconnect(self.clientName)
+                print(""Connection to client was closed!"")
+
+
+class CameraFactory(WebSocketServerFactory):
+        protocol = CameraServerProtocol
+        def __init__(self, url, bridge):
+                WebSocketServerFactory.__init__(self, url)
+                self.frame = None
+                self.connections = {}
+                self.bridge = bridge
+                self.rec = Recognition()
+
+        def connect(self, clientName, connection):
+                if (clientName not in self.connections):
+                        self.connections[clientName] = connection
+                else:
+                        print(""Failed to register connection. "")
+
+        def disconnect(self, clientName):
+                if (clientName in self.connections):
+                        del self.connections[clientName]
+                else:
+                        print(""Nothing to delete matching client name. "")
+
+        def post(self, clientName, message):
+                self.connections[clientName].sendMessage(message.encode(""UTF8""))
+
+
+
+#==========================CoMPES Client=====================================
+
+class HubClientProtocol(WebSocketClientProtocol):
+        """"""
+        Description: Handles the connections to the CoMPES hubs
+        """"""
+        def onConnect(self, request):
+                """"""
+                Description: Prints the connection that was made with the client
+                """"""
+                self.factory.connect(""hub1"", self)
+
+        def onMessage(self, payload, isBinary):
+                """"""
+                Description: Gets the CVO from CoMPES and starts the processing of it into usable objects
+                """"""
+                self.factory.bridge.SRO = payload.decode(""UTF8"")
+                
+
+        def onClose(self, wasClean, code, reason):
+                print(""Connection to CoMPES closed"")
+                
+class HubClientFactory(WebSocketClientFactory):
+        protocol = HubClientProtocol
+        def __init__(self, url, bridge, head):
+                WebSocketClientFactory.__init__(self, url, headers = head)
+                self.connections = {}
+                self.bridge = bridge
+
+        def connect(self, clientName, connection):
+                if (clientName not in self.connections):
+                        self.connections[""hub1""] = connection
+                else:
+                        print(""Failed to register connection. "")
+
+        def disconnect(self, clientName):
+                if (""hub1"" in self.connections):
+                        del self.connections[clientName]
+                else:
+                        print(""Nothing to delete matching client name. "")
+
+        def post(self, message):
+                self.connections[""hub1""].sendMessage(message.encode(""UTF8""))
+                        
+#=======================================================================================
+        
+@app.route(""/"", methods = [""GET""])
+def index():
+        return render_template(""index.html"")
+        
+@app.route(""/reg_complete"", methods = [""GET""])
+def reg_complete():
+        resp = make_response(render_template('active.html', user=comms.user))
+        return resp
+
+@app.route(""/connect"", methods = [""POST""])
+def connect():
+        #process users credentials here. 
+        
+        db = DBHelper(True) #close the connection in this function. 
+
+        username = flask_request.form['username_field']
+        password = flask_request.form['password_field']
+
+        authSuccess = db.authenticate([username, password])
+
+        if (authSuccess):
+                #make the connection to compess here. 
+                
+                hub_id = db.getHubIdByUsername(username)
+                net_id = db.getNetIdByUsername(username)
+                acu_id = db.getACUByUsername(username)
+                access_key = db.getAccessKeyByUsername(username)
+                
+                comms.registerUser(username, password, net_id, hub_id, acu_id, access_key)
+                #comms.web_factory.rec.is_registering = True
+                
+                resp = make_response(render_template('active.html', user = username))
+                return resp
+        else:
+                return render_template('index.html', message=""Failed to authenticate. Please try again. "")
+                
+        db.disconnect()
+        
+@app.route(""/associations"", methods = ['GET','POST'])
+def associations():
+        if flask_request.method == 'POST':
+                try:
+                        #register the associations here.
+                        gestureDict = {}
+                        gestureDict['gest_1'] = flask_request.form['gest_1']
+                        gestureDict['gest_2'] = flask_request.form['gest_2']
+                        gestureDict['gest_3'] = flask_request.form['gest_3']
+                        gestureDict['gest_4'] = flask_request.form['gest_4']
+                        gestureDict['gest_5'] = flask_request.form['gest_5']
+                        
+                        print(str(gestureDict))
+                        print(comms.user)
+                        
+                        db = DBHelper(True) #open in passive mode
+                        for key in gestureDict:
+                                db.addGesture(comms.user, key, gestureDict[key])
+                        db.disconnect()
+                        return render_template('active.html')
+                except:
+                        return ""Error processing form. ""
+                        
+        else:
+                SRO = comms.getSRO()
+                states = ujson.loads(SRO)['lab-cam']['States']
+                states_str = ','.join(states)
+                db = DBHelper(True)
+                current_states = []
+                for x in range(1,6):
+                        gest = db.getGestureFunction(comms.user, 'gest_' + str(x))
+                        current_states.append(gest) if gest != None else current_states.append('')
+                current_states = ','.join(current_states)
+
+                resp = make_response(render_template('associations.html', default = states_str, data = current_states))
+                return resp
+        
+@app.route(""/register"", methods = [""POST"", ""GET""])
+def register():
+        if flask_request.method == 'POST': 
+                username = flask_request.form['username_field']
+                password = flask_request.form['password_field']
+                netID = flask_request.form['network_id_field']
+                hubID = flask_request.form['hub_id_field']
+                acu_id = flask_request.form['acu_id_field']
+                access_key = flask_request.form['access_key_field']
+                
+                #send username and password information to CoMPES
+                
+                db = DBHelper()
+                dbSuccess = db.createUser([username, password, hubID, netID, acu_id, access_key])
+                
+                if (dbSuccess):
+                        #sign in to CoMPES
+                        #process items from CoMPES
+                        #register face
+                        
+                        global comms
+                        comms.registerUser(username, password, netID, hubID, acu_id, access_key)
+                        comms.cam_factory.rec.is_registering = True
+                        resp = make_response(render_template('profile.html', user = username))
+                        return resp
+                else: 
+                        #display message on webpage and have the user try again. 
+                        return ""failed register""
+        else:
+                return render_template(""register.html"")
+
+#==========================Main========================================
+def main():
+        """"""
+        Description: Starts all of the factories and protocols needed to start the server and all of its functions.
+        Notes:
+                1.
+                2.
+        """"""
+        log.startLogging(sys.stdout)
+        #initRecognizer()
+        global comms
+        comms = WebComms(""ws://0.0.0.0:"")
+        wsResourse = WSGIResource(reactor, reactor.getThreadPool(), app)
+
+        
+        #STEP-5: Setup the reactor
+        reactor.listenTCP(port_nums[0], Site(wsResourse))
+
+        #STEP-6: run
+        reactor.run()
+
+if(__name__ == ""__main__""):
+        main()
+"
+FandRec FandRec/kinect2/camera_client.py,"""""""
+Project: FandRec
+Programmed by: Trenton Sauer, Trenton Scott, David Williams
+Last Modified:
+Description: Client for the camera
+Notes:
+    1. camera_client needs to be installed and run on the machine
+       that will be sending the frames to the server
+       Liscense:
+Copyright (c) 2018, FandRec Dev Team
+All rights reserved.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the FandRec Dev Team nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ""AS IS"" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL FandRec Dev Team BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+""""""
+#==============================Imports=======================================
+import sys, ujson, cv2
+import numpy as np
+
+from twisted.python import log
+
+from twisted.protocols.basic import NetstringReceiver
+
+from autobahn.twisted.websocket import WebSocketClientFactory, /
+     WebSocketClientProtocol, connectWS
+
+from twisted.internet import reactor
+
+kinect_version = None
+try:
+    from pykinect2 import PyKinectV2
+    from pykinect2 import PyKinectRuntime
+    kinect_version = ""V2""
+except:
+    try:
+        from pykinect import nui
+        kinect_version = ""V1""
+    except:
+        pass
+
+#=======================Application Interface===========================
+
+class CameraClientProtocol(WebSocketClientProtocol):
+    """"""
+    Description: Handles the receiving messages from the 
+                 server and sends the frames back.
+    """"""
+    #raw_frame = cv2.UMat(np.empty((540, 1172, 3), np.uint8))
+
+    def __init__(self):
+        self.raw_frame = self._createEmptyFrame()
+        self.fps = 15
+        self.v1_is_streaming = False
+
+    def onOpen(self):
+        self.sendFrames()
+    
+    def sendFrames(self):
+        """"""
+        Description: Gets a frame from the camera then 
+                     encodes it as a json then sends it.
+        Notes: 
+            1. This is the protocol associated with the CameraClientFactory
+        """"""
+        # Grab combined rgb and color frames
+        self._grabFrame()
+        
+        # Compress and Package frame
+        out = cv2.UMat(self.raw_frame)
+        out = cv2.imencode('.jpg', out, [cv2.IMWRITE_JPEG_QUALITY, 60])[1].tolist()
+        out = ujson.dumps(out)
+
+        # Send frame
+        self.sendMessage(out.encode(""utf8""))
+        reactor.callLater(1/self.fps, self.sendFrames)
+
+    def _grabFrame(self):
+        """"""
+        """"""
+        if kinect_version == ""V2"":
+            # Get rgb frame
+            if self.factory.camera.has_new_color_frame():
+                bgr = self.factory.camera.get_last_color_frame().reshape(1080,1920,4)
+                bgr = cv2.UMat(bgr)
+                bgr = cv2.cvtColor(bgr, cv2.COLOR_BGRA2GRAY)
+                bgr = cv2.resize(bgr,(960,540))
+                bgr = cv2.UMat(bgr,[0,540],[154,806])
+                self.raw_frame[:,0:652] = cv2.UMat.get(bgr) 
+            
+            # STEP 2: Get depth frame
+            if self.factory.camera.has_new_depth_frame():
+                depth = self.factory.camera.get_last_depth_frame().reshape((424,512))
+                d4d = np.clip(depth, 0, 2**11, depth)
+                d4d = np.uint8(depth.astype(float) *255/(2**11))
+                d4d = d4d[16:394,12:465]
+                self.raw_frame[0:378,652:1105] = d4d
+
+        elif kinect_version == ""V1"":
+            # check if Kinect v1 streams are currently active
+            if self.v1_is_streaming == False:
+
+                # start streaming frames
+                self.factory.camera.video_frame_ready += self._kinectBGRHandler
+                self.factory.camera.depth_frame_ready += self._kinectDepthHandler
+                self.v1_is_streaming = True
+
+        else:
+            std_bgr = cv2.UMat(self.factory.camera.read())
+            self.rawframe = cv2.resize(std_bgr, (1280,720))
+            
+    def _kinectBGRHandler(self, frame):
+        bgr = np.empty((480,640), np.uint8)
+        frame.image.copy_bits(bgr.ctypes.data)
+        bgr = cv2.cvtColor(bgr, cv2.COLOR_BGRA2GRAY)
+        self.raw_frame[:,0:640] = bgr
+
+    def _kinectDepthHandler(self, frame):
+        raw_depth = np.empty((480,640), np.uint16)
+        frame.image.copy_bits(depth.ctypes.data)
+        
+        depth = np.clip(raw_depth, 0, 2**10, raw_depth)
+        depth = np.uint8(depth.astype(float) *255/(2**10))
+        self.raw_frame[:,640:1280] = depth
+
+    def _createEmptyFrame(self):
+        global kinectV1_version
+        if (kinect_version == ""V2""):
+            empty_frame = np.empty((540, 1105), np.uint8)
+        elif (kinect_version == ""V1""):
+            empty_frame = np.empty((480, 1280), np.uint8)
+        else:
+            empty_frame = cv2.UMat(np.empty((720, 1280), np.uint8))
+        return empty_frame
+
+        
+class CameraClientFactory(WebSocketClientFactory):
+    """"""
+    Description: Starts the video capture from the local kinect or camera.
+    """"""
+    def __init__(self, addr, cam_port):
+        WebSocketClientFactory.__init__(self, addr, headers={'camera_id': 'camera1'})
+        print(""Starting Camera"")
+        global kinect_version
+        if (kinect_version == ""V2""):
+            self.camera = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Depth)
+        elif (kinect_version == ""V1""):
+            self.camera = nui.Runtime()
+            self.camera.video_stream.open(nui.ImageStreamType.Video,2,nui.ImageResolution.Resolution640x480,nui.ImageType.Color)
+            self.camera.depth_stream.open(nui.ImageStreamType.Depth,2,nui.ImageResolution.Resolution640x480,nui.ImageType.Depth)
+            
+        else:
+            kinect_version = None
+            self.camera = cv2.VideoCapture(0)
+
+#=================Client Main===================================
+
+def main():
+    """"""
+    Description: Starts CameraClientProtocol defined above which sends
+    the frames from the camera to the server
+    """"""
+    #STEP 1: Setup the factory
+    log.startLogging(sys.stdout)
+    ip_address = ""127.0.0.1""
+    port_num = 8091
+
+    factory = CameraClientFactory(""ws://"" + ip_address + "":"" + str(port_num), 0)
+    factory.protocol = CameraClientProtocol
+    reactor.connectTCP(ip_address, port_num, factory)
+
+    #STEP 2: Start the reactor
+    reactor.run()
+
+if __name__ == '__main__':
+    main()
+"
+FandRec FandRec/kinect2/gesture.py,"#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+""""""A module containing an algorithm for hand gesture recognition""""""
+
+import cv2, numpy as np
+
+
+class HandGestureRecognition:
+    """"""Hand gesture recognition class
+        This class implements an algorithm for hand gesture recognition
+        based on a single-channel input image showing the segmented arm region,
+        where pixel values stand for depth. The algorithm will then find the hull
+        of the segmented hand region and convexity defects therein. Based on this
+        information,an estimate on the number of extended fingers is derived.
+    """"""
+
+    def __init__(self):
+        """"""Class constructor
+            initializes all necessary parameters.
+        """"""
+        # maximum depth deviation for a pixel to be considered within range
+        self.abs_depth_dev = 14
+
+        # cut-off angle (deg): everything below this is a convexity point that
+        # belongs to two extended fingers
+        self.thresh_deg = 80.0
+
+    def recognize(self, img_gray):
+        """"""Recognizes hand gesture in a single-channel depth image
+            This method estimates the number of extended fingers based on
+            a single-channel depth image showing a hand and arm region.
+            :param img_gray: single-channel depth image
+            :returns: (num_fingers, img_draw) The estimated number of
+                       extended fingers and an annotated RGB image
+        """"""
+        self.height, self.width = img_gray.shape[:2]
+
+        # segment arm region
+        segment = self._segment_arm(img_gray)
+
+        # find the hull of the segmented area, and based on that find the
+        # convexity defects
+        contours, defects = self._find_hull_defects(segment)
+
+        # detect the number of fingers depending on the contours and convexity
+        # defects, then draw defects that belong to fingers green, others red
+        img_draw = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
+        num_fingers, img_draw = self._detect_num_fingers(contours,
+                                                           defects, img_draw)
+
+        return (num_fingers, img_draw)
+
+    def _segment_arm(self, frame):
+        """"""Segments arm region
+            This method accepts a single-channel depth image of an arm and
+            hand region and extracts the segmented arm region.
+            It is assumed that the hand is placed in the center of the image.
+            :param frame: single-channel depth image
+            :returns: binary image (mask) of segmented arm region, where
+                      arm=255, else=0
+        """"""
+        # find center region of frame
+        #cv2.imshow(""frame"", frame)
+        center_kernel = 10
+        center = frame[self.height//2-center_kernel:self.height//2+center_kernel,
+                       self.width//2-center_kernel:self.width//2+center_kernel]
+
+        # find median depth value of center region
+        med_val = np.median(center)
+        
+        frame = np.where(abs(frame - med_val) <= self.abs_depth_dev,
+                         128, 0).astype(np.uint8)
+        # morphological
+        kernel = np.ones((3, 3), np.uint8)
+        frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, kernel)
+
+        # connected component
+        small_kernel = 3
+        frame[self.height//2-small_kernel:self.height//2+small_kernel,
+              self.width//2-small_kernel:self.width//2+small_kernel] = 128
+        mask = np.zeros((self.height+2, self.width+2), np.uint8)
+        
+        flood = frame.copy()
+        cv2.floodFill(flood, mask, (self.width//2, self.height//2), 255,
+                      flags=4 | (255 << 8))
+        ret, flooded = cv2.threshold(flood, 129, 255, cv2.THRESH_BINARY)
+        return flooded
+
+    def _find_hull_defects(self, segment):
+        """"""Find hull defects
+            This method finds all defects in the hull of a segmented arm
+            region.
+            :param segment: a binary image (mask) of a segmented arm region,
+                            where arm=255, else=0
+            :returns: (max_contour, defects) the largest contour in the image
+                      and all corresponding defects
+        """"""
+        segment, contours, hierarchy = cv2.findContours(segment, cv2.RETR_TREE,
+                                               cv2.CHAIN_APPROX_SIMPLE)
+
+        # find largest area contour
+        max_contour = max(contours, key=cv2.contourArea)
+        
+            
+        epsilon = 0.01*cv2.arcLength(max_contour, True)
+        max_contour = cv2.approxPolyDP(max_contour, epsilon, True)
+
+        # find convexity hull and defects
+        hull = cv2.convexHull(max_contour, returnPoints=False)
+        defects = cv2.convexityDefects(max_contour, hull)
+
+        return (max_contour, defects)
+
+    def _detect_num_fingers(self, contours, defects, img_draw):
+        """"""Detects the number of extended fingers, based on a contour and
+            convexity defects. It will annotate an RGB color image of the
+            segmented arm region with all relevant defect points and the hull.
+            :param contours: a list of contours
+            :param defects: a list of convexity defects
+            :param img_draw: an RGB color image to be annotated
+            :returns: (num_fingers, img_draw) the estimated number of extended
+                      fingers and an annotated RGB color image
+        """"""
+
+        # if there are no convexity defects, possibly no hull found or no
+        # fingers extended
+        if defects is None:
+            return [0, img_draw]
+
+        # assume the wrist generates two convexity defects (one on each
+        # side), so if there are no additional defect points, there are no
+        # fingers extended
+        if len(defects) <= 2:
+            return [0, img_draw]
+
+        # if there is a sufficient amount of convexity defects, we will find a
+        # defect point between two fingers so to get the number of fingers,
+        # start counting at 1
+        num_fingers = 1
+
+        for i in range(defects.shape[0]):
+            # each defect point is a 4-tuple
+            start_idx, end_idx, farthest_idx, _ = defects[i, 0]
+            start = tuple(contours[start_idx][0])
+            end = tuple(contours[end_idx][0])
+            far = tuple(contours[farthest_idx][0])
+
+            # draw the hull
+            cv2.line(img_draw, start, end, [0, 255, 0], 2)
+
+            # if angle is below a threshold, defect point belongs to two
+            # extended fingers
+            if angle_rad(np.subtract(start, far),
+                         np.subtract(end, far)) < deg2rad(self.thresh_deg):
+
+                num_fingers += 1
+
+                # draw point as green
+                cv2.circle(img_draw, far, 5, [0, 255, 0], -1)
+            else:
+                # draw point as red
+                cv2.circle(img_draw, far, 5, [255, 0, 0], -1)
+
+        return (min(5, num_fingers), img_draw)
+
+
+def angle_rad(v1, v2):
+    """"""Angle in radians between two vectors
+        returns the angle (in radians) between two array-like vectors
+    """"""
+    return np.arctan2(np.linalg.norm(np.cross(v1, v2)), np.dot(v1, v2))
+
+
+def deg2rad(angle_deg):
+    """"""Convert degrees to radians
+        This method converts an angle in radians e[0,2*np.pi) into degrees
+        e[0,360)
+    """"""
+    return angle_deg/180.0*np.pi
+"
+FandRec FandRec/kinect2/hub.py,"import sys
+
+from twisted.internet import reactor
+from twisted.python import log
+from twisted.web.server import Site
+from twisted.web.static import File
+
+from autobahn.twisted.websocket import WebSocketServerFactory, /
+	WebSocketServerProtocol, /
+	listenWS
+	
+	#'lab-cam,,fan_on'
+	
+import ujson
+
+address = u""ws://127.0.0.1:9000""
+
+class BroadcastServerProtocol(WebSocketServerProtocol):
+
+	def onConnect(self, request):
+		print(""____Sign in to CoMPES____"")
+		print(request.headers['user-id'])
+		print(request.headers['pass'])
+		print(request.headers['net-id'])
+		print(request.headers['hub-id'])
+		print(request.headers['acu-id'])
+		print(request.headers['access-key'])
+		print(""______END Sign In_______"")
+		
+	def onOpen(self):
+		self.factory.register(self)
+		SRO = {'lab-speaker': {'ID': 'lab-speaker','States': ['']}, 'lab-cam': {'ID': 'lab-cam', 'States': ['fan_on', 'fan_off', 'light_on', 'light_off'] }, 'lab-mic': {}, 'lab-mod': {}, 'lab-button': {} }
+		self.factory.post(ujson.dumps(SRO)) 
+
+	def onMessage(self, payload, isBinary):
+		print(payload.decode('UTF8'))
+		
+	def onClose(self, wasClean, code, reason):
+		reason.value = ""Client closed connection""
+		WebSocketServerProtocol.connectionLost(self, reason)
+		self.factory.unregister(self)
+		print(""Connection to client closed!"")
+		
+
+
+class BroadcastServerFactory(WebSocketServerFactory):
+	""""""
+	Simple broadcast server broadcasting any message it receives to all
+	currently connected clients.
+	""""""
+	protocol = BroadcastServerProtocol
+	def __init__(self, url):
+		WebSocketServerFactory.__init__(self, url)
+		self.client = None
+
+	def register(self, client):
+		self.client = client
+
+	def unregister(self, client):
+		self.client = None
+
+	def post(self, msg):
+		self.client.sendMessage(msg.encode(""UTF8""))
+
+if __name__ == '__main__':
+	log.startLogging(sys.stdout)
+	ServerFactory = BroadcastServerFactory(address)
+	listenWS(ServerFactory)
+	reactor.run()
+"
+FandRec FandRec/kinect2/recognition.py,"import sys, cv2, dlib, numpy as np, os, time
+from pathlib import Path
+from gesture import *
+from database import DBHelper
+DBHelper = DBHelper.DBHelper
+
+        
+class FrameInfo:
+    """"""
+
+    """"""
+    camera_type = None
+    c_width = None
+    c_height = None
+    d_width = None
+    d_height = None
+    
+    def __init__(self, frame):
+        
+        height, width = frame.shape[:2]
+        
+        if height == 720:
+            self.cam_type = ""rgb""
+            self.c_width = 1280
+            self.c_height = 720
+        elif width == 1280:
+            self.cam_type = ""V1""
+            self.c_width = 640
+            self.c_height = 480
+            self.d_width = 640
+            self.d_height = 480
+        elif width == 1105:
+            self.cam_type = ""V2""
+            self.c_width = 652
+            self.c_height = 540
+            self.d_width = 453
+            self.d_height = 378
+
+    def getCameraType(self):
+        return self.camera_type
+
+    def getColorRes(self):
+        return (self.c_width, self.c_height)
+    
+    def getDepthRes(self):
+        return (self.d_width, self.d_height)
+        
+
+class Recognition:
+    """"""
+    
+    """"""
+    # global class variables
+    face_cascade = cv2.CascadeClassifier('./haarcascades/haarcascade_frontalface_default.xml')
+    profile_cascade = cv2.CascadeClassifier('./haarcascades/haarcascade_profileface.xml')
+    hand_cascade = cv2.CascadeClassifier('./haarcascades/aGest.xml')
+    gesture_recognizer = HandGestureRecognition()
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    sample_size = 100
+    gesture_timeout = 3
+    rec_trained = False
+
+    
+    def __init__(self):
+        """"""Class constructor
+            
+        
+        """"""
+        # initialize OpenCV's local binary pattern histogram recognizer
+        # and load saved training data
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
+        if Path('./trainingData/recognizer.yml').is_file():
+            self.recognizer.read('./trainingData/recognizer.yml')
+            self.rec_trained = True
+            
+
+        # instance variables
+        self.frame_info = None
+        self.samples = 0
+        self.sample_images = []
+        self.gesture_start = 0
+        self.roi = None
+        self.last_gest = """"
+        self.using_depth = True
+        self.is_tracking = True
+        
+        # bools for altering webpage control flow
+        self.is_registering = False
+        self.reg_complete = False
+        
+
+    def processFrame(self, frame, username):
+        """"""
+        
+        """"""
+        
+        # get resolution and camera type from frame
+        if self.frame_info is None:
+            self.frame_info = FrameInfo(frame)
+            
+        # split raw frame into color, grayscale, and depth variants
+        frame = cv2.UMat(frame)
+        display, gray, depth = self._splitFrame(frame)
+        gray =  cv2.equalizeHist(gray)
+        
+        gesture = '0'  # default value will not send tag
+        
+        # reg_complete bool indicates whether registration has been completed
+        # during this method call
+        self.reg_complete = False
+        
+        if self.is_registering:
+            display = self._register(display, gray, username)
+            display = self._displayProgress(display)
+        elif self.rec_trained:
+            display, username, gesture = self._detect(display, gray, depth)
+            display = self._displayGesture(display)
+        
+        return (display, username, gesture)
+        
+    
+    def _register(self, frame, gray, username):
+        """"""
+        """""" 
+        if self.samples < self.sample_size:
+            faces = self._combineFaces(gray)
+            if len(faces) > 1:
+                pass
+            else:
+                for (x,y,w,h) in faces:
+                    cv2.rectangle(frame, (x, y),
+                                  (x + w , y + h),
+                                  (255,0,0), 2)
+                    self.samples += 1
+                    gray = cv2.UMat(gray, [y,y+h], [x,x+w])
+                    gray = cv2.resize(gray, (100, 100))
+                    self.sample_images.append(gray)
+                    
+        else:   # finished collecting face data
+            db = DBHelper()
+            user_id = db.getIDByUsername(username)
+            id_array = [user_id] * self.sample_size
+            self.sample_images = self.sample_images[0:self.sample_size]
+            for i in range(self.sample_size):
+                self.sample_images[i] = cv2.UMat.get(self.sample_images[i])
+	    
+            if Path('./trainingData/recognizer.yml').is_file():
+                self.recognizer.update(self.sample_images, np.array(id_array))
+            else:
+                self.recognizer.train(self.sample_images, np.array(id_array))
+            self.recognizer.write('./trainingData/recognizer.yml')
+            
+            # registration complete
+            self.reg_complete = True
+            self.rec_trained = True
+            
+            # reset variables before detection begins
+            self._reset()
+            
+        return frame
+
+
+    def _detect(self, frame, gray, depth):
+        """"""
+            :param frame: a BGR color image for display
+            :param gray: a grayscale copy of the passed BGR frame
+            :param depth: a grayscale frame containing depth information
+            :returns: (out_frame, username, gesture) the processed frame
+            for display on webpage, the detected user, the detected gesture
+        """"""
+        out_frame = frame
+        username = """"
+        gesture = ""0""
+        num_fingers = 0
+
+        if self.is_tracking:
+            
+            faces = self._combineFaces(gray)
+            for (x,y,w,h) in faces:
+
+                user_id, confidence = self.recognizer.predict(cv2.UMat(gray,[y,y+h],[x,x+w]))
+                    
+                if confidence <= 80:
+                    db = DBHelper()
+                    username = db.getUsernameById(user_id)
+                    cv2.rectangle(out_frame, (x, y),
+                                  (x + w, y + h),
+                                  (225,105,65), 2)
+                    cv2.putText(out_frame, username,
+                                (int(x + 5), int(y - 10)),
+                                self.font, 1.5,
+                                (225,105,65), 2)
+
+                    hands = self.hand_cascade.detectMultiScale(gray, 1.1, 7)
+                    for (x,y,w,h) in hands:
+                        
+                        # draw rectangle around detected hand
+                        cv2.rectangle(out_frame,(x,y),(x+w,y+h),(0,255,0),2)
+                        
+                        # calculate center point of detected hand
+                        c_x = w//2 + x
+                        c_y = h//2 + y
+                        
+                        # calculate region of interest by building a rectangle around detected hand
+                        s = 2
+                        f_x = int(c_x - w*s)
+                        f_y = int(c_y - h*s)
+                        f_w = int(w*s)
+                        f_h = int(h*s)
+                        self.roi = (f_x,f_y,f_w,f_h)
+                        self.is_tracking = False
+
+                        # begin timing gesture
+                        self.gesture_start = time.time()
+                else:
+                    cv2.rectangle(out_frame, (x,y), (x+w, y+h), (0, 0, 255), 2)
+                    cv2.putText(out_frame, ""unknown"",
+                                (int(x + 5), int(y - 10)),
+                                self.font, 1.5,
+                                (0, 0, 255), 2)
+                    
+                
+        else:
+            x,y,w,h = self.roi
+            depth = cv2.UMat.get(depth)
+            try:
+                num_fingers, out_hand = self.gesture_recognizer.recognize(depth[y:y+h,x:x+w])
+                out_frame = cv2.UMat.get(out_frame)
+                out_frame[y:y+h,x+x_w] = out_hand
+                cv2.putText(out_frame, num_fingers,
+                            (int(x + 5), int(y - 10)),
+                            self.font, 1.5,
+                            (0, 0, 255), 2)
+            except:
+                pass
+            if (time.time() - self.gesture_start) > self.gesture_timeout:
+                gesture = str(num_fingers)
+                self.last_gest = gesture
+                self.is_tracking = True
+
+        return (out_frame, username, gesture)
+    
+
+    def _splitFrame(self, rawframe):
+        """"""
+        """"""
+        c_w, c_h = self.frame_info.getColorRes()
+        d_w, d_h = self.frame_info.getDepthRes()
+        gray = cv2.UMat(rawframe,[0,c_h],[0,c_w])
+        depth = cv2.UMat(rawframe,[0,d_h],[c_w,c_w+d_w])
+        depth = cv2.resize(depth,(c_w, c_h))
+        bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        return (bgr, gray, depth)
+    
+
+    def _combineFaces(self, gray):
+        """"""
+        """"""
+        faces = self.face_cascade.detectMultiScale(gray, 1.2, 7)
+        profiles = self.profile_cascade.detectMultiScale(gray, 1.2, 7)
+        faces_combined = []
+        for face in faces:
+            faces_combined.append(face)
+        for profile in profiles:
+            faces_combined.append(profile)
+
+        return faces_combined
+    
+
+    def _displayProgress(self, frame):
+        """"""
+        """"""
+        x, y = self.frame_info.getColorRes()
+        percent_complete = str(int(self.samples/self.sample_size*100)) + ""%""
+        cv2.putText(frame, percent_complete,
+                    (x//2-5, y-10), self.font, 1.2,
+                    (0,255,0), 2)
+        return frame
+
+
+    def _displayGesture(self, frame):
+        """"""
+        """"""
+        x, y = self.frame_info.getColorRes()
+        message = ""Gesture:  "" + self.last_gest
+        cv2.putText(frame, message,
+                    (x//4, y-10), self.font, 1.2,
+                    (0,255,0), 2)
+        return frame
+    
+
+    def _reset(self):
+        """"""
+        reinitializes variables used in gesture detection state
+        """"""
+        self.is_registering = False
+        self.samples = 0
+        self.sample_images = []
+        self.roi = None
+        self.is_tracking = True
+
+    
+        
+        
+                
+    
+"
+Home_Defence_System Home_Defence_System/pyimagesearch/tempimage.py,"
+# import the necessary packages
+import uuid
+import os
+ 
+class TempImage:
+	def __init__(self, basePath=""./"", ext="".jpg""):
+		# construct the file path
+		self.path = ""{base_path}/{rand}{ext}"".format(base_path=basePath,
+			rand=str(uuid.uuid4()), ext=ext)
+ 
+	def cleanup(self):
+		# remove the file
+		os.remove(self.path)
+"
+Home_Defence_System Home_Defence_System/pi_surveillance.py,"# import the necessary packages
+from pyimagesearch.tempimage import TempImage
+from dropbox.client import DropboxOAuth2FlowNoRedirect
+from dropbox.client import DropboxClient
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+import argparse
+import warnings
+import datetime
+import imutils
+import json
+import time
+import cv2
+import time
+
+# construct the argument parser and parse the arguments
+ap = argparse.ArgumentParser()
+ap.add_argument(""-c"", ""--conf"", required=True,
+	help=""path to the JSON configuration file"")
+args = vars(ap.parse_args())
+
+# filter warnings, load the configuration and initialize the Dropbox
+# client
+warnings.filterwarnings(""ignore"")
+conf = json.load(open(args[""conf""]))
+client = None
+
+if conf[""use_dropbox""]:
+	# connect to dropbox and start the session authorization process
+	flow = DropboxOAuth2FlowNoRedirect(conf[""dropbox_key""], conf[""dropbox_secret""])
+	print ""[INFO] Authorize this application: {}"".format(flow.start())
+	authCode = raw_input(""Enter auth code here: "").strip()
+ 
+	# finish the authorization and grab the Dropbox client
+	(accessToken, userID) = flow.finish(authCode)
+	client = DropboxClient(accessToken)
+	print ""[SUCCESS] dropbox account linked""
+
+
+# initialize the camera and grab a reference to the raw camera capture
+camera = PiCamera()
+camera.resolution = tuple(conf[""resolution""])
+camera.framerate = conf[""fps""]
+rawCapture = PiRGBArray(camera, size=tuple(conf[""resolution""]))
+ 
+# allow the camera to warmup, then initialize the average frame, last
+# uploaded timestamp, and frame motion counter
+print ""[INFO] warming up...""
+time.sleep(conf[""camera_warmup_time""])
+avg = None
+lastUploaded = datetime.datetime.now()
+motionCounter = 0
+
+# capture frames from the camera
+for f in camera.capture_continuous(rawCapture, format=""bgr"", use_video_port=True):
+	# grab the raw NumPy array representing the image and initialize
+	# the timestamp and occupied/unoccupied text
+	frame = f.array
+	timestamp = datetime.datetime.now()
+	text = ""Unoccupied""
+ 
+	# resize the frame, convert it to grayscale, and blur it
+	frame = imutils.resize(frame, width=500)
+	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	gray = cv2.GaussianBlur(gray, (21, 21), 0)
+ 
+	# if the average frame is None, initialize it
+	if avg is None:
+		print ""[INFO] starting background model...""
+		avg = gray.copy().astype(""float"")
+		rawCapture.truncate(0)
+		continue
+ 
+	# accumulate the weighted average between the current frame and
+	# previous frames, then compute the difference between the current
+	# frame and running average
+	cv2.accumulateWeighted(gray, avg, 0.5)
+	frameDelta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
+
+        # threshold the delta image, dilate the thresholded image to fill
+	# in holes, then find contours on thresholded image
+	thresh = cv2.threshold(frameDelta, conf[""delta_thresh""], 255,
+		cv2.THRESH_BINARY)[1]
+	thresh = cv2.dilate(thresh, None, iterations=2)
+	(cnts, _) = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+		cv2.CHAIN_APPROX_SIMPLE)
+ 
+	# loop over the contours
+	for c in cnts:
+		# if the contour is too small, ignore it
+		if cv2.contourArea(c) < conf[""min_area""]:
+			continue
+ 
+		# compute the bounding box for the contour, draw it on the frame,
+		# and update the text
+		(x, y, w, h) = cv2.boundingRect(c)
+		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+		text = ""Occupied""
+ 
+	# draw the text and timestamp on the frame
+	ts = timestamp.strftime(""%A %d %B %Y %I:%M:%S%p"")
+	
+	cv2.putText(frame, ""Room Status: {}"".format(text), (10, 20),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+	cv2.putText(frame, ts, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+		0.35, (0, 0, 255), 1)
+
+        # draw temperature on the screen
+        infile = open(""tempOutput.txt"", ""r"")
+        temp = infile.readline().rstrip()
+        #print('received temp of: ' + temp)
+        
+	cv2.putText(frame, ""Room Temperature: {}"".format(temp), (30, 40),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+	cv2.putText(frame, temp, (50, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+		0.35, (0, 0, 255), 1)
+
+	# check to see if the room is occupied
+	if text == ""Occupied"":
+                #targetFile = open('videoOutputFile', 'w')
+                #targetFile.write('yes')
+                #NEED TO CALL AZURE CLOUD HERE INSTEAD OF PRINTING TO FILE
+                #SEND YES TO SURVICE BUS
+                
+		# check to see if enough time has passed between uploads
+		if (timestamp - lastUploaded).seconds >= conf[""min_upload_seconds""]:
+			# increment the motion counter
+			motionCounter += 1
+ 
+			# check to see if the number of frames with consistent motion is
+			# high enough
+			if motionCounter >= conf[""min_motion_frames""]:
+				# check to see if dropbox sohuld be used
+				if conf[""use_dropbox""]:
+					# write the image to temporary file
+					t = TempImage()
+					cv2.imwrite(t.path, frame)
+ 
+					# upload the image to Dropbox and cleanup the tempory image
+					print ""[UPLOAD] {}"".format(ts)
+					path = ""{base_path}/{timestamp}.jpg"".format(
+						base_path=conf[""dropbox_base_path""], timestamp=ts)
+					client.put_file(path, open(t.path, ""rb""))
+					t.cleanup()
+ 
+				# update the last uploaded timestamp and reset the motion
+				# counter
+				lastUploaded = timestamp
+				motionCounter = 0
+ 
+	# otherwise, the room is not occupied
+	else:
+                targetFile = open('videoOutputFile', 'w')
+                
+	# check to see if the frames should be displayed to screen
+	if conf[""show_video""]:
+		# display the security feed
+		cv2.imshow(""Security Feed"", frame)
+		key = cv2.waitKey(1) & 0xFF
+ 
+		# if the `q` key is pressed, break from the lop
+		if key == ord(""q""):
+			break
+ 
+	# clear the stream in preparation for the next frame
+	rawCapture.truncate(0)
+
+"
+Home_Defence_System Home_Defence_System/readTemp.py,"# -*- coding: utf-8 -*-
+
+import RPi.GPIO as GPIO
+import time
+
+def bin2dec(string_num):
+    return str(int(string_num, 2))
+   
+data = []
+
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(4,GPIO.OUT)
+GPIO.output(4,GPIO.HIGH)
+time.sleep(0.025)
+GPIO.output(4,GPIO.LOW)
+time.sleep(0.02)
+
+GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+for i in range(0,500):
+    data.append(GPIO.input(4))
+   
+   
+bit_count = 0
+tmp = 0
+count = 0
+HumidityBit = """"
+TemperatureBit = """"
+crc = """"
+
+
+try:
+   while data[count] == 1:
+      tmp = 1
+      count = count + 1
+        
+
+   for i in range(0, 50):
+      bit_count = 0
+      
+      while data[count] == 0:
+         tmp = 1
+         count = count + 1
+
+      while data[count] == 1:
+         bit_count = bit_count + 1
+         count = count + 1
+
+      if bit_count > 3:
+         if i>=0 and i<8:
+            HumidityBit = HumidityBit + ""1""
+         if i>=16 and i<24:
+            TemperatureBit = TemperatureBit + ""1""
+      else:
+         if i>=0 and i<8:
+            HumidityBit = HumidityBit + ""0""
+         if i>=16 and i<24:
+            TemperatureBit = TemperatureBit + ""0""
+            
+except:
+   print ""ERR_RANGE""
+   exit(0)
+
+   
+try:
+   for i in range(0, 8):
+      bit_count = 0
+      
+      while data[count] == 0:
+         tmp = 1
+         count = count + 1
+
+      while data[count] == 1:
+         bit_count = bit_count + 1
+         count = count + 1
+
+      if bit_count > 3:
+         crc = crc + ""1""
+      else:
+         crc = crc + ""0""
+except:
+   print ""ERR_RANGE""
+   exit(0)
+      
+      
+Humidity = bin2dec(HumidityBit)
+Temperature = bin2dec(TemperatureBit)
+
+if int(Humidity) + int(Temperature) - int(bin2dec(crc)) == 0:
+   print Humidity
+   print Temperature
+else:
+   print ""ERR_CRC""
+"
+Home_Defence_System Home_Defence_System/sendTemp.py,"import time
+import sys
+from azure.servicebus import ServiceBusService
+
+infile = open(""tempOutput.txt"", ""r"")
+temp = infile.readline().rstrip()
+#print('received temp of: ' + temp)
+temp = int(temp)
+
+key_name = ""sendRule""
+key_value = ""9SWS0sNEBQMfTmuBHlxFwUHBFMSBgmJ77/ICSRm9HK4=""
+
+sbs = ServiceBusService(""pimessage-ns"",shared_access_key_name=key_name, shared_access_key_value=key_value)
+if temp > 65 or temp < 30:
+#    print('sending temp of:' + temp)
+    sbs.send_event('pimessage', '{ ""DeviceId"": ""smokerpi"", ""Temperature"": temp }')
+    print('sent!')
+    print ('got here')
+else:
+    print('temp was in normal range')
+""
+Home_Defence_System Home_Defence_System/sendTempSMS.py,""import time
+import sys
+from azure.servicebus import ServiceBusService
+
+from twilio.rest import TwilioRestClient
+
+#key_name = ""sendRule""
+#key_value = ""9SWS0sNEBQMfTmuBHlxFwUHBFMSBgmJ77/ICSRm9HK4=""
+
+#sbs = ServiceBusService(""pimessage-ns"",shared_access_key_name=key_name, shared_access_key_value=key_value)
+
+#while(True):
+#	print('sending...')
+#	sbs.send_event('pimessage', '{ ""DeviceId"": ""smokerpi"", ""Temperature"": ""37.0"" }')
+#	print('sent!')
+#	time.sleep(10)
+
+infile = open(""tempOutput.txt"", ""r"")
+temp = infile.readline().rstrip()
+#print('received temp of: ' + temp)
+temp = int(temp)
+client = TwilioRestClient(account = 'AC5e63bbdefc2e7374af34ce71e9d252d7', token = '76910c3c9f315d9e39c914581101b969')
+
+client.messages.create(to='+14175408907',from_='19182382589',body = temp )
+time.sleep(1)
+"
+IR_Spectra_Recognizer IR_Spectra_Recognizer/irspectrum-master/IR_Functions.py,"""""""
+Program: IRSpectrum.py
+Programmed by: Josh Ellis, Josh Hollingsworth, Aaron Kruger, Alex Matthews, and
+    Joseph Sneddon
+Description: This program will recieve an IR Spectrograph of an unknown
+    molecule and use our algorithm to compare that graph to a stored database of
+    known molecules and their IR Spectrographs. This program will then return a
+    list of the closest Spectrographs matches as determined by our algorithm.
+IR_Functions.py: This part of the program contains most of the functions used by
+    Query.py and UpdatedDB.py.
+""""""
+#---------------------------------Imports--------------------------------------
+import PyPDF2
+import sqlite3
+from PIL import Image
+import sys
+import warnings
+import os
+
+warnings.filterwarnings(""ignore"")
+#------------------------------------------------------------------------------
+
+#---------------------------------Variables------------------------------------
+
+#------------------------------------------------------------------------------
+
+#---------------------------------Classes/Functions----------------------------
+def PullImages(filename):
+    '''
+    Pull graph image from first page of PDF
+    '''
+    file = PyPDF2.PdfFileReader(open(filename, ""rb""))
+    xObject = file.getPage(0)
+
+
+    xObject = xObject['/Resources']['/XObject'].getObject()
+
+    images=[]
+
+    for obj in xObject:
+
+        if xObject[obj]['/Subtype'] == '/Image':
+            size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+            data = xObject[obj]._data
+            if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
+                mode = ""RGB""
+            else:
+                mode = ""P""
+
+            if xObject[obj]['/Filter'] == '/FlateDecode':
+                img = Image.frombytes(mode, size, data)
+                img.save(filename + "".png"")
+                images+=[filename + "".png""]
+            elif xObject[obj]['/Filter'] == '/DCTDecode':
+                img = open(filename + "".jpg"", ""wb"")
+                img.write(data)
+                img.close()
+                images+=[filename + "".jpg""]
+            elif xObject[obj]['/Filter'] == '/JPXDecode':
+                img = open(filename + "".jp2"", ""wb"")
+                img.write(data)
+                img.close()
+                images+=[filename + "".jp2""]
+    return images
+
+def PullStructure(filename):
+    '''
+    Pulls the image of the molecular structure from page 2 as a png
+    '''
+    file = PyPDF2.PdfFileReader(open(filename, ""rb""))
+    xObject = file.getPage(1)
+
+
+    xObject = xObject['/Resources']['/XObject'].getObject()
+
+    images=[]
+
+    for obj in xObject:
+        if xObject[obj]['/Subtype'] == '/Image':
+            size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+            data = xObject[obj].getData()
+            if xObject[obj]['/Filter'] == '/FlateDecode':
+                img = Image.frombytes(""P"", size, data)
+                img.save(filename.split('.')[0] + "".png"")
+                images+=[filename.split('.')[0] + "".png""]
+    return images
+
+def PullText(filename):
+    '''
+    Pull text from the first page of a PDF
+    returns an array containing:
+    [ SpectrumID, CAS Number, Molecular Formula, Compound Name ]
+    '''
+    specID = """"
+    cas = """"
+    formula = """"
+    name = """"
+
+    try:
+        file = PyPDF2.PdfFileReader(open(filename, ""rb""))
+        page = file.getPage(0)
+
+        page_content = page.extractText()
+
+        idIndex = page_content.find(""Spectrum ID"")
+        casIndex = page_content.find(""CAS Registry Number"")
+        formulaIndex = page_content.find(""Formula"")
+        nameIndex = page_content.find(""CAS Index Name"")
+        sourceIndex = page_content.find(""Source"")
+        startIndex = casIndex
+
+        begin = idIndex + 11
+        end = casIndex
+        while begin != end:
+            specID += page_content[begin]
+            begin += 1
+
+        begin = casIndex + 19
+        end = formulaIndex
+        while begin != end:
+            cas += page_content[begin]
+            begin += 1
+
+        begin = formulaIndex + 7
+        end = nameIndex
+        while begin != end:
+            formula += page_content[begin]
+            begin += 1
+
+        begin = nameIndex + 14
+        end = sourceIndex
+        while begin != end:
+            name += page_content[begin]
+            begin += 1
+    except:
+        print(""There was an error extracting text from the PDF"")
+
+    #return [specID, cas, formula, name]
+    return {""spectrumID"":specID, ""cas"":cas, ""formula"":formula, ""name"":name}
+
+def CleanStructure(filename):
+    '''
+    Changes all of the brightest pixels in a compound structure image
+    to full alpha
+    '''
+    img = Image.open(filename)
+    imgdata=list(img.getdata())#the pixels from the image
+
+    img = Image.new('RGBA', (img.size[0],img.size[1]))
+
+    imgdata=[(i,i,i,255)  if i<31 else (i,i,i,0) for i in imgdata]
+
+    img.putdata(imgdata)
+    img.save(filename)
+
+def ReadComparisonKeys():
+    f=open(""public//types.keys"",'r')
+    transformTypes=f.readlines()
+    
+    f.close()
+    transformTypes=[line for line in /
+                    [lines.strip() for lines in transformTypes] /
+                    if len(line)]
+    
+    return transformTypes
+    
+
+class ReadGraph:
+    '''
+    Reads each datapoint in the graph and converts it to an x,y coordinate
+    Each datapoint gets added to a list and returned
+    '''
+    def __new__(self, image):
+        '''area of image scanned for data'''
+        self.image = image
+        self.xMin=200
+        self.xMax=4100
+        self.xRange=self.xMax-self.xMin #the x-range of the graph.
+        self.yMin=1.02
+        self.yMax=-0.05
+        self.yRange=self.yMax-self.yMin #the y-range of the graph.
+        #This is the width and height standard for all IR samples
+        self.width=1024
+        self.height=768
+        #the area of each image that we want (the graph)
+        self.targetRect=(113,978,29,724) #(left,right,top,bottom)
+
+        return self.readGraph(self)
+
+    #copies pixels from the source image within the targetRect
+    def cropRect(self, source):
+        left,right,top,bottom=self.targetRect
+        newImg=[]
+        for y in range(top,bottom+1):
+            for x in range(left,right+1):
+                newImg+=[source[y*self.width+x]]
+        return newImg
+
+    #checks if the pixel at x,y is black
+    def pix(self, graph,x,y):
+        r,g,b=graph[y*self.width+x]
+        if r+g+b>=100:
+            return False#not black
+        else:
+            return True#black
+
+    #These two functions convert graph x,y into scientific x,y
+    def convertx(self, x):
+        return self.xMin+self.xRange*(x/self.width)
+    def converty(self, y):
+        return self.yMin+self.yRange*(y/self.height)
+
+    def convertGraph(self, graph):
+        """"""
+        Creates a graphData list by finding each black pixel on the x axis. For each
+        x get the y range over which the graph has black pixels or None if the graph
+        is empty at that x value. It stores the min and max y values in the
+        graphData list. Then returns the filled graphData List.
+        """"""
+        graphData=[]#to be filled with values from graph
+        #For each x get the y range over which the graph has black pixels
+        # or None if the graph is empty at that x value
+        for x in range(0,self.width):
+            graphData+=[None]
+            foundPix=False#have you found a pixel while looping through the column
+            for y in range(0,self.height):
+                p=self.pix(self,graph,x,y)#is the pixel black
+                if p and not foundPix:
+                    #record the first black pixels y value
+                    foundPix=True
+                    maxVal=y
+                elif not p and foundPix:
+                    #record the last black pixels y value
+                    minVal=y
+                    graphData[-1]=(minVal,maxVal)#write these values to data
+                    break#next x
+
+        return graphData
+
+    #convert graph into datapoints
+    def cleanData(self, graphData):
+        data=[]
+        for x in range(len(graphData)):
+            #Points in format x,y
+            if graphData[x]:
+                data+=[(self.convertx(self,x),self.converty(self,graphData[x][1]))]
+
+        return data
+
+    def readGraph(self,):
+        #Crops the image
+        img = Image.open(self.image)
+        imgdata=list(img.getdata())#the pixels from the image
+
+        #The graph is cut out of the larger image
+        graph=self.cropRect(self,imgdata)
+
+        #width and height of out cropped graph
+        self.width=self.targetRect[1]-self.targetRect[0]+1
+        self.height=self.targetRect[3]-self.targetRect[2]+1
+
+        #Fills graphData with values from 'graph'
+        graphData = self.convertGraph(self,graph)
+
+        #return only x,maxy and skip any none values
+        data = self.cleanData(self,graphData)
+        return data
+
+def ConvertQuery(l,comparisonTypes):
+    '''for each type being processed, convert the query
+    and add the result to a dictionary to be returned'''
+    queryDict={}
+    for cType in comparisonTypes:
+        queryDict[cType]=[]
+        queryDict[cType]+=Convert(l,cType)
+    return queryDict
+
+class Convert():
+    '''
+    takes the raw data and converts it into a format that can be compared later
+    '''
+    def __new__(self,raw,cType):
+        if ""raw"" == cType:
+            #if the comparison is by raw
+            return raw
+        elif '.' in cType:
+            #convert the raw data into the appropiate format
+            if cType.split('.')[0] == ""Cumulative"":
+                return self.Cumulative(self,raw,int(cType.split('.')[-1]))
+            elif cType.split('.')[0] == ""CumulativePeak"":
+                return self.CumulativePeak(self,raw,int(cType.split('.')[-1]))
+            elif cType.split('.')[0] == ""AbsoluteROC"":
+                return self.AbsoluteROC(self,raw,int(cType.split('.')[-1]))
+        raise ValueError(""Convert type not found: ""+str(cType))
+
+    def Cumulative(self,raw,scanrange):
+        '''
+        The value at x=i will be total/divisor
+        where total equals the sum of the points from i-scanrange to i
+        and divisor equals the points from i-scanrange to i+scanrange
+        '''
+        raw=['x']+raw[:]+['x']
+        divisor=0
+        total=0
+        for i in range(1,scanrange+1):
+            divisor+=max(0.1,raw[i][1])
+        retlist=[]
+        for i in range(1,len(raw)-1):
+
+            low=max(0,i-scanrange)
+            high=min(len(raw)-1,i+scanrange)
+
+            total-=max(0.1,raw[low][1]) if raw[low]!=""x"" else 0
+            total+=max(0.1,raw[i][1]) if raw[i]!=""x"" else 0
+
+            divisor-=max(0.1,raw[low][1]) if raw[low]!=""x"" else 0
+            divisor+=max(0.1,raw[high][1]) if raw[high]!=""x"" else 0
+
+            retlist+=[(raw[i][0],total/divisor)]
+
+        return retlist
+
+    def CumulativePeak(self,raw,scanrange):#peak to peak transformation
+        '''
+        Find all peaks in list l
+        Weight peaks by their height and how far they are from other taller peaks
+        '''
+        retlist=[]
+        lenl=len(raw)
+        for i in range(lenl):
+
+            #current x and y values for point i in list l
+            curx=raw[i][0]
+            cury=raw[i][1]
+
+            #If this point has the same y value as the previous point
+            # then continue to the next point
+            if i-1>=0: 
+                if (raw[i-1][1] == cury):
+                    retlist+=[(curx,0)]
+                    continue
+
+            #Search right of the point until you run into another peak or off the graph
+            # sum the difference between cury and the graph at i+j to find the area right of the peak
+
+            s1=0
+            j=1
+            while i+j<lenl and raw[i+j][1] <= cury and j<scanrange:
+                s1+= (cury - raw[i+j][1]) * (raw[i+j][0]-raw[i+j-1][0])
+                j+=1
+
+            #Same opperation but searching left
+            s2=0
+            j=-1
+            while i+j>=0 and raw[i+j][1] <= cury and j>-scanrange:
+                s2+= (cury - raw[i+j][1]) * (raw[i+j+1][0]-raw[i+j][0])
+                j-=1
+
+            #take the lowest of the 2 values
+            retlist+=[(curx,min(s1,s2)*cury)]
+
+        return self.Cumulative(self,retlist,scanrange)
+
+    def AbsoluteROC(self,raw,scanrange):
+        '''
+        The absolute value of the slope of the curve in list l
+        Note: this method may not be useful for matching compounds
+        '''
+        retlist=[]
+        for i in range(len(raw)-1):
+            retlist+=[(raw[i][0], abs(raw[i+1][1]-raw[i][1]) )]
+
+        return self.Cumulative(self,retlist,scanrange)
+
+class Compare():
+    '''
+    Compares a query to a subject in the database
+    Converts the subject first if needed
+    '''
+    def __new__(self,cType,subject,query):
+        if not ""raw"" in cType or ""raw"" == cType:
+            #if the subject doesn't need to be converted
+            return self.directCompare(self,subject,query)
+        elif ""."" in cType:
+            #else the subject need to be converted
+            if cType.split('.')[0] in [""Cumulative"",""CumulativePeak"",""AbsoluteROC""]:
+                return self.directCompare(self, Convert(subject,cType) ,query)
+        raise ValueError(""Compare type not found: ""+str(cType))
+
+    def directCompare(self,transformation1,transformation2):
+        '''compares the each x in t1 to the closest x in t2'''
+        difference=0
+        #Swap if needed, want t1 to be sorter than t2
+        if len(transformation1)>len(transformation2):
+            tmp=transformation1[:]
+            transformation1=transformation2[:]
+            transformation2=tmp
+
+        x2=0
+        for x1 in range(len(transformation1)):
+            while transformation1[x1][0]>transformation2[x2][0] and x2<len(transformation2)-1:
+                x2+=1
+            difference+=abs(transformation1[x1][1]-transformation2[x2][1])
+
+        return difference
+
+def AddSortResults(differenceDict,casNums):
+    '''
+    Take a dictionary with casNums as keys filled with dictionaries with types as keys
+    Add the differences of the types for each casnum together and return a sorted list
+    where each element is the compound's difference from the query followed by the casnum
+    '''
+    comparisonTypes=list(differenceDict.keys())[:]
+
+    differenceList=[]
+    for i in range(len(casNums)):
+        dif=0
+        for cType in comparisonTypes:
+            if differenceDict[cType][i]:
+                dif+=differenceDict[cType][i][0]
+        differenceList+=[(dif,differenceDict[cType][i][1])]
+    differenceList.sort()
+
+    return differenceList
+
+def SmartSortResults(differenceDict,casNums):
+    '''
+    Take a dictionary with casNums as keys filled with dictionaries with types as keys
+    Return a sorted list where each element is the compound's difference from
+    the query followed by the casnum
+    
+    The compounds are sorted by first seperating compounds by type and then sorting each list
+    Each list adds its top result to the bestDict, then any compounds that have been paced
+    in the bestDict by the majority of the comparison types are added to the bottom of the
+    difference list
+    '''
+    comparisonTypes=list(differenceDict.keys())[:]
+
+    for cType in comparisonTypes:
+        differenceDict[cType].sort()
+    differenceList=[]
+
+    bestDict={}
+    for i in range(len(casNums)):#casNum
+        bestDict[casNums[i]]=[]
+
+    for i in range(len(casNums)):
+        tempList=[]
+        for cType in comparisonTypes:
+            if differenceDict[cType][i]!=(0,):#not found due to active update
+                if bestDict[differenceDict[cType][i][1]]!=""Done"":
+                    bestDict[differenceDict[cType][i][1]]+=[(differenceDict[cType][i][0],cType)]   
+        for casNum in list(bestDict.keys()):
+            if bestDict[casNum]!=""Done"":
+                if len(bestDict[casNum])>=max(1,len(comparisonTypes)//2+1):
+                    dif=0
+                    for comp in bestDict[casNum]:
+                        dif=max(dif,comp[0])
+                    tempList+=[(dif,casNum)]
+                    bestDict[casNum]=""Done""
+        if tempList:
+            tempList.sort()
+            differenceList+=tempList
+
+    return differenceList
+
+class IRDB:
+    def __init__(self):
+        self.conn = sqlite3.connect(os.path.realpath(""IR.db""))
+        self.cur = self.conn.cursor()
+
+    def searchIRDB(self, sqlQuery):
+        self.cur.execute(sqlQuery)
+        return self.cur.fetchall()
+
+    def writeIRDB(self, sqlWrite, dbValues=None):
+        try:
+            if dbValues:
+                self.cur.execute(sqlWrite, dbValues)
+            else:
+                self.cur.execute(sqlWrite)
+            return True
+        except Exception as e:
+            return False
+
+    def commitIRDB(self):
+        try:
+            self.conn.commit()
+            return True
+        except Exception as e:
+            return False
+
+    def fetchallIRDB(self):
+        return self.cur.fetchall()
+#------------------------------------------------------------------------------
+"
+IR_Spectra_Recognizer IR_Spectra_Recognizer/irspectrum-master/Query.py,"""""""
+Program: IRSpectrum.py
+Programmed by: Josh Ellis, Josh Hollingsworth, Aaron Kruger, Alex Matthews, and
+    Joseph Sneddon
+Description: This program will recieve an IR Spectrograph of an unknown
+    molecule and use our algorithm to compare that graph to a stored database of
+    known molecules and their IR Spectrographs. This program will then return a
+    list of the closest Spectrographs matches as determined by our algorithm.
+Query.py: This part of the program recieves the file location of a query IR
+    Spectrograph downloaded by main.js. formatQueryData() then formats the query
+    data and returns a dictionary, queryDict, of the formated query data.
+    compareQueryToDB() then takes that dictionary and compares it against all of
+    the IR spectrographs imported from our IR spectrum database (IR.db).
+    compareQueryToDB() then sends a string back to main.js of the closest IR
+    spectrographs found in the IR.db.
+""""""
+#---------------------------------Imports--------------------------------------
+import sys
+import os
+from IR_Functions import *
+import multiprocessing as mp
+from shutil import copyfile
+#------------------------------------------------------------------------------
+
+#---------------------------------Classes/Functions----------------------------
+class FormatQueryData:
+    def __new__(self, queryPath, comparisonTypes, filename):
+        """"""
+        Creates class object and initializes class variables, then returns a
+        dictionary of the formated query data.
+        """"""
+        self.queryPath = queryPath
+        self.comparisonTypes = comparisonTypes
+        self.filename = filename
+
+        return self.formatQueryData(self)
+
+    def timeStamp(self, f):
+        return int(f.split('.')[0].split('_')[-1])
+
+    def cleanupQueryData(self, images):
+        """"""Removes all generated query data that is more than 5 min old.""""""
+        currentTime = self.timeStamp(self, self.filename)
+        holdTime=2*60*1000
+        for each in [file for file in os.listdir(""public//uploads"")
+                        if file.endswith("".jpg"")]:
+            try:
+                if self.timeStamp(self, each)<currentTime-holdTime:
+                    os.remove(""public//uploads//""+each)
+            except:
+                pass
+
+        #Deletes the temp file downloaded by main.js
+        os.remove(images[0])
+        if 'temp' in self.queryPath:
+            os.remove(self.queryPath)
+
+    def formatQueryData(self):
+        #Open the source image
+        images = PullImages(self.queryPath)  #PullImages() from IR_Functions.py
+        IR_Data = ReadGraph(images[0])  #ReadGraph() from IR_Functions.py
+
+        copyfile(images[0], ""public//uploads//"" + self.filename)
+
+        #Cleans up temp data from queries.
+        self.cleanupQueryData(self, images)
+
+        #Calculate each transformation. ConvertQuery() from IR_Functions.py
+        queryDict=ConvertQuery(IR_Data,self.comparisonTypes)
+
+        return queryDict
+#------------------------------------------------------------------------------
+
+#----------------------------Multiprocessing functions-------------------------
+def work(DataQ, ReturnQ, query, comparisonTypes):
+    try:
+        casNum, dataDict = DataQ.get()
+
+        differenceDict = {}
+        for cType in comparisonTypes:
+            differenceDict[cType] = []
+
+            dif=Compare(cType,dataDict[cType],query[cType])
+
+            differenceDict[cType] += [(dif, casNum)]
+        ReturnQ.put(differenceDict)
+        return True
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        if int(exc_tb.tb_lineno)==83:
+            #error due to active update
+            ReturnQ.put(None)
+            return False
+        print('/nERROR!:')
+        print('%s' % e)
+        print(""/n""+str(exc_tb.tb_lineno)+"" ""+str(exc_obj)+"" ""+str(exc_tb),""/n"")
+        return False
+
+def worker(workerNo, JobsDoneQ, NofJobs, NofWorkers, ReturnQ, DataQ, query,
+            comparisonTypes):
+    # Worker loop
+    working = True
+    while working:
+        jobNo = JobsDoneQ.get()
+        work(DataQ, ReturnQ, query, comparisonTypes)
+        if NofJobs-jobNo <= NofWorkers-1:
+            working = False
+
+def multiProcessController(formatedQueryData,comparisonTypes,IR_Info,dataDict,differenceDict):
+    CORES = min(mp.cpu_count(),len(IR_Info))
+    
+    JobsDoneQ=mp.Queue()
+    ReturnQ=mp.Queue()
+    ReadRequestQ=mp.Queue()
+    DataQ=mp.Queue()
+    DataBuffer=min(CORES*2,len(IR_Info))
+
+    for iCompound in range(len(IR_Info)):
+        JobsDoneQ.put(iCompound+1)
+        ReadRequestQ.put(1)
+    for iCompound in range(DataBuffer):
+        DataQ.put((IR_Info[iCompound][0], dataDict[IR_Info[iCompound][0]]))
+        ReadRequestQ.get()
+        ReadRequestQ.put(0)
+
+    p = {}
+    for core in range(CORES):
+        p[core] = mp.Process(target=worker,
+                          args=[core, JobsDoneQ, len(IR_Info), CORES, ReturnQ, DataQ,
+                                formatedQueryData, comparisonTypes])
+        p[core].start()
+
+    #Read returned data from workers, add new read reqests
+    for iCompound in range(DataBuffer, len(IR_Info)+DataBuffer):
+        retDict = ReturnQ.get()
+        if retDict:
+            for cType in comparisonTypes:
+                differenceDict[cType] += retDict[cType]
+        else:#not found due to active update
+            for cType in comparisonTypes:
+                differenceDict[cType] += [(0,)]
+        if ReadRequestQ.get():
+            DataQ.put((IR_Info[iCompound][0], dataDict[IR_Info[iCompound][0]]))
+
+    for core in range(CORES):
+        p[core].join()
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+def importDB():
+    try:
+        myIRDB = IRDB()
+        IR_Info = myIRDB.searchIRDB(""SELECT CAS_Num FROM IR_Info GROUP BY CAS_Num"")
+        IR_Data=myIRDB.searchIRDB(""SELECT CAS_Num,Type,Wavelength,Value FROM IR_Data"")
+
+        return IR_Info, IR_Data
+    except:
+        return None
+
+def generateDataDict(IR_Info, IR_Data, comparisonTypes):
+    dataDict = {}
+    for iCompound in range(len(IR_Info)):
+        dataDict[IR_Info[iCompound][0]] = {}
+        for cType in comparisonTypes:
+            dataDict[IR_Info[iCompound][0]][cType] = []
+    for iDBrow in range(len(IR_Data)):
+        if 'raw'!=IR_Data[iDBrow][1]:
+            dataDict[IR_Data[iDBrow][0]][IR_Data[iDBrow][1]]+=[IR_Data[iDBrow][2:]]
+        else:
+            for cType in comparisonTypes:
+                if 'raw' in cType:
+                    dataDict[IR_Data[iDBrow][0]][cType]+=[IR_Data[iDBrow][2:]]
+    return dataDict
+
+def generateDifDict(comparisonTypes):
+    differenceDict = {}
+    for cType in comparisonTypes:
+        differenceDict[cType]=[]
+    return differenceDict
+
+def compareQueryToDB(formatedQueryData,comparisonTypes):
+    IR_Info, IR_Data = importDB()
+
+    dataDict = generateDataDict(IR_Info, IR_Data, comparisonTypes)
+
+    differenceDict = generateDifDict(comparisonTypes)
+
+    multiProcessController(formatedQueryData,comparisonTypes,IR_Info,dataDict,differenceDict)
+
+    #Sort compounds by difference. SmartSortResults() from IR_Functions.py
+    results=SmartSortResults(differenceDict,[a[0] for a in IR_Info])[:min(20,len(IR_Info))]
+    retString=""""
+
+    #Save list of compound differences to file
+    for iResult in range(len(results)):
+        retString+=results[iResult][1]+"" ""
+
+    #Gives sorted list of Output to main.js
+    return retString.strip()
+#------------------------------------------------------------------------------
+
+#---------------------------------Program Main---------------------------------
+def main(queryPath, filename):
+
+    if importDB():
+        #get comparison types from file
+        comparisonTypes=ReadComparisonKeys()
+        
+        formatedQueryData = FormatQueryData(queryPath,comparisonTypes,filename)
+
+        results = compareQueryToDB(formatedQueryData,comparisonTypes)
+        print(results)
+
+        sys.stdout.flush()
+    else:
+        print(""DB_Not_Found"")
+
+        sys.stdout.flush()
+    
+if __name__ == ""__main__"":
+    main(sys.argv[1], sys.argv[2])
+#---------------------------------End of Program-------------------------------
+"
+IR_Spectra_Recognizer IR_Spectra_Recognizer/irspectrum-master/UpdateDB.py,"""""""
+Program: IRSpectrum.py
+Programmed by: Josh Ellis, Josh Hollingsworth, Aaron Kruger, Alex Matthews, and
+    Joseph Sneddon
+Description: This program will recieve an IR Spectrograph of an unknown
+    molecule and use our algorithm to compare that graph to a stored database of
+    known molecules and their IR Spectrographs. This program will then return a
+    list of the closest Spectrographs matches as determined by our algorithm.
+UpdateDB.py: This part of the program imports all pdf files from */IR_samples
+    and updates the database (IR.db) with each new compound found.
+""""""
+#---------------------------------Imports--------------------------------------
+import sys
+import sqlite3
+import os
+from PIL import Image
+from shutil import copyfile
+import multiprocessing as mp
+import time
+from IR_Functions import *
+#------------------------------------------------------------------------------
+
+#---------------------------------Classes/Functions----------------------------
+def initializeDB():
+    #If IR.db somehow gets deleted then re-create it.
+    if not os.path.exists(""IR.db""):
+        file = open('IR.db', 'w+')
+        file.close()
+
+    sqlData = ""CREATE TABLE IF NOT EXISTS `IR_Data` ( `CAS_Num` TEXT, `Type` /
+                TEXT, `Wavelength` NUMERIC, `Value` NUMERIC )""
+    sqlInfo = ""CREATE TABLE IF NOT EXISTS `IR_Info` ( `Spectrum_ID` TEXT, /
+                `CAS_Num` TEXT, `Formula` TEXT, `Compound_Name` TEXT, /
+                PRIMARY KEY(`Spectrum_ID`) )""
+
+    myIRDB = IRDB()
+    myIRDB.writeIRDB(sqlData)
+    myIRDB.writeIRDB(sqlInfo)
+    myIRDB.commitIRDB()
+
+def tryWork(Jobs,comparisonTypes):
+    try:
+        file = Jobs.get()
+
+        """""" Open the source image """"""
+        images = PullImages(file)
+
+        fname = file.split(""//"")[-1]
+        casNum = fname.split(""."")[0]
+
+        """""" is this file already in the database? """"""
+        myIRDB = IRDB()
+        sqlQ = ""SELECT CAS_Num FROM IR_Info WHERE CAS_Num='""+casNum+""'""
+        sqlData = ""SELECT CAS_Num FROM IR_Data WHERE CAS_Num='""+casNum+""'""
+        sqlInfo = ""INSERT INTO IR_Info(Spectrum_ID, CAS_Num, Formula, /
+                                        Compound_Name) VALUES (?, ?, ?, ?)""
+
+        myIRDB.writeIRDB(sqlQ)
+        myIRDB.writeIRDB(sqlData)
+        qData = myIRDB.fetchallIRDB()
+
+        """""" if not in the database set the flag to add it """"""
+        if len(qData)==0:
+
+            copyfile(images[0],""public//images//""+casNum+"".jpg"")
+
+            structure=PullStructure(file)[0]
+            CleanStructure(structure)
+            copyfile(structure,""public//info//""+structure.split(""//"")[-1])
+            os.remove(structure)
+
+            values=PullText(file)
+            #Save compound data into the database
+            dbvalues = (list(values.values())[0], casNum,
+                        list(values.values())[2], list(values.values())[3])
+
+            myIRDB.writeIRDB(sqlInfo, dbvalues)
+            myIRDB.commitIRDB()
+
+            f=open(""public//info//""+casNum+"".json"",'w')
+            f.write(str(values).replace(""'"",'""'))
+            f.close()
+        else:
+            os.remove(images[0])
+            return casNum+"" already in DB""
+
+        data = ReadGraph(images[0])  #ReadGraph() from IR_Functions.py
+        os.remove(images[0])
+
+        #calculate each transformation
+        comparisonDict={}
+        for cType in comparisonTypes:
+            comparisonDict[cType]=Convert(data,cType)
+
+        sqlQ = ""INSERT INTO IR_Data(CAS_Num, Type, Wavelength, Value) /
+                    VALUES (?, ?, ?, ?)""
+        #save each transformation to file
+        for cType in comparisonDict:
+            d=[]
+            for row in comparisonDict[cType]:
+                d+=[str(row[0])+','+str(row[1])]
+                dbvalues = (casNum, cType, row[0], row[1])
+                myIRDB.writeIRDB(sqlQ, dbvalues)
+                #save data
+
+        myIRDB.commitIRDB()
+        return casNum+"" added to DB""
+
+    except Exception as e:
+        print('/nERROR!:')
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        print('%s' % e)
+        print(""/n""+str(exc_tb.tb_lineno)+"" ""+str(exc_obj)+"" ""+str(exc_tb),""/n"")
+        return False
+#------------------------------------------------------------------------------
+
+#----------------------------Multiprocessing functions-------------------------
+def worker(Jobs,workerNo,NofWorkers,JobsDoneQ,NofJobs,comparisonTypes):
+    working=True
+    while working:
+        message=tryWork(Jobs,comparisonTypes)
+        if message:
+            jobNo=JobsDoneQ.get()
+            print(""[Worker No. ""+str(workerNo)+""] ""+str(jobNo)+"" of ""
+                    +str(NofJobs)+"" ""+message)
+            if NofJobs-jobNo <= NofWorkers-1:
+                working = False
+        else:
+            working=False
+
+def multiProcessUpdater(comparisonTypes):
+    filedir=[os.path.join(""IR_samples"",file) for file in
+                os.listdir(""IR_samples"") if file.endswith("".pdf"")]
+
+    Jobs=mp.Queue()
+    JobsDoneQ=mp.Queue()
+    for i in range(len(filedir)):
+        Jobs.put(filedir[i])
+        JobsDoneQ.put(i+1)
+
+    CORES = min(mp.cpu_count(),len(filedir))
+    p={}
+    print(""Starting"")
+    start=time.time()
+    for core in range(CORES):
+        p[core] = mp.Process(target = worker, args=[Jobs,core,CORES,JobsDoneQ,len(filedir),
+                                                    comparisonTypes])
+        p[core].start()
+    for core in range(CORES):
+        p[core].join()
+    print(""Done and Done ""+str(time.time()-start))
+#------------------------------------------------------------------------------
+
+#---------------------------------Program Main---------------------------------
+def main():
+
+    comparisonTypes=ReadComparisonKeys()
+
+    #Edits comparisonTypes to include only a single raw
+    #comparisons with the raw argument will be calculated in the future.
+    raws=[]
+    for icomp in range(len(comparisonTypes)-1,-1,-1):
+        if 'raw' in comparisonTypes[icomp]:
+            raws+=[comparisonTypes.pop(icomp)]
+    if len(raws)>0:
+        comparisonTypes+=['raw']
+
+    initializeDB()
+
+    multiProcessUpdater(comparisonTypes)
+
+if __name__ == ""__main__"":
+    main()
+#---------------------------------End of Program-------------------------------
+"
+Person_Identification_System Person_Identification_System/shared/ActivityDbRow.py,"# 4/16 8:07pm JD - added has arrived attributes to keep track of when a tracked person arrives at the predicted camera
+
+class ActivityDbRow(object):
+	def __init__(self, row=None):
+		# these values correspond with the columns in the database
+		self.id = None
+		self.label = None
+		self.start_time = None
+		self.end_time = None
+		self.camera_id = None
+		self.next_camera_id = None
+		self.has_arrived = None
+
+		# these values are used at runtime to track various aspects of the tracked person
+		self.rect_start = None # the x,y upper left coordinate of the bounding rect
+		self.rect_end = None # the x, y of the lower right ...
+		self.detected = False # this value gets marked as true on each pass through the main camera loop until the person leaves and then becomes false
+		self.not_detected_count = 0 #an additional value used to decide when a person has left the camera
+		self.updateLabelCounter = 0
+		if row: # when reconsituting from the database we will have a row of column values that we use to populate this instance
+			self.id = row[0]
+			self.label = row[1]
+			self.start_time = row[2]
+			self.end_time = row[3]
+			self.camera_id = row[4]
+			self.next_camera_id = row[5]
+			self.has_arrived = True if row[6] and row[6] == 'T' else False
+
+#below are general setter and getter methods for the above attributes
+	def getID(self):
+		return self.id
+
+	def setID(self, id):
+		self.id = id;
+
+	def getLabel(self):
+		return self.label
+
+	def setLabel(self, label):
+		if self.label == None or self.label == ""Unknown"":
+			self.updateLabelCounter == 0
+			self.label = label;
+		elif self.updateLabelCounter == 5:
+			self.updateLabelCounter == 0
+			if label != ""Unknown"":
+				self.label = label;
+		else:
+			self.updateLabelCounter += 1
+
+	def getStart_time(self):
+		return self.start_time
+
+	def setStart_time(self, start_time):
+		self.start_time = start_time;
+
+	def getEnd_time(self):
+		return self.end_time
+
+	def setEnd_time(self, end_time):
+		self.end_time = end_time;
+
+	def getCamera_id(self):
+		return self.camera_id
+
+	def setCamera_id(self, camera_id):
+		self.camera_id = camera_id;
+
+	def getNext_camera_id(self):
+		return self.next_camera_id
+
+	def setNext_camera_id(self, next_camera_id):
+		self.next_camera_id = next_camera_id;
+
+	def get_has_arrived(self):
+		return self.has_arrived
+
+	def set_has_arrived(self, b):
+		self.has_arrived =b 
+
+	def getRect_start(self):
+		return self.rect_start
+
+	def setRect_start(self, point):
+		self.rect_start = point
+
+	def getRect_end(self):
+		return self.rect_end
+
+	def setRect_end(self, point):
+		self.rect_end = point
+
+	def set_detected(self, b):
+		if b:
+			self.not_detected_count = 0
+		self.detected = b
+
+	def was_detected(self):
+		return self.detected
+
+	#only if this gets called 5 times does it finally return true
+	#it insures that we have indeed encountered an activity that
+	#has left the camera but we don't know which way they went
+	#five times = a half a second of time
+	def has_left_the_scene(self):
+		self.not_detected_count += 1
+		return self.not_detected_count > 5
+
+	#some basic sql methods for common operations on an activitydbrow
+	def getSelectStatement(self):
+		return ""select id, label, start_time, end_time, camera_id, next_camera_id, has_arrived from tracking where id = %s"" % self.id
+
+	#when updating a tracking record we are only updating the end_time, next_camera_id and has_arrived columns
+	def getUpdateStatement(self):
+		return ""update tracking set end_time = current_timestamp, next_camera_id = %s, has_arrived = '%s' where id = %s"" % ((self.next_camera_id if self.next_camera_id else 'null'), 'T' if self.has_arrived else 'F', self.id)
+
+	#when inserting we are populating the lable, camera_id, raw_time and has_arrived columns ( the database uses an auto increment id field that assigns the id )
+	def getInsertStatement(self):
+		return ""insert into tracking (label, camera_id, raw_time, has_arrived) values('%s', %s, '%s', 'F')"" % (self.label, (self.camera_id if self.camera_id else 'null'), self.start_time)
+"
+Person_Identification_System Person_Identification_System/shared/CameraDbRow.py,"# 4/11 7:36pm JD - added functions for prediction indicator
+
+class CameraDbRow(object):
+	def __init__(self, row=None):
+		self.id = None
+		self.ip = None
+		self.left_camera_id = None
+		self.right_camera_id = None
+		self.is_online = None
+
+		self.has_motion = False
+		self.has_predicted_motion = False
+
+		if row:
+			self.id = row[0]
+			self.ip = row[1]
+			self.left_camera_id = row[2]
+			self.right_camera_id = row[3]
+			self.is_online = row[4] == 'T'
+
+	def getID(self):
+		return self.id
+
+	def setID(self, id):
+		self.id = id;
+
+	def getIP(self):
+		return self.ip
+
+	def setIP(self, ip):
+		self.ip = ip
+
+	def getLeftCamera(self):
+		return self.left_camera_id
+
+	def setLeftCameraID(self, id):
+		self.left_camera_id = id
+
+	def getRightCameraID(self):
+		return self.right_camera_id
+
+	def setRightCameraID(self, id):
+		self.right_camera_id = id
+
+	def isOnline(self):
+		return self.is_online
+
+	def setIsOnline(self, online):
+		self.is_online = online
+
+	def getSelectStatement(self):
+		return ""select id, camera_IP, left_cam_id, right_cam_id, is_online from camera where id = %s"" % self.id
+
+	def getUpdateStatement(self):
+		return ""update camera set camera_IP = '%s', left_cam_id = %s, right_cam_id = %s, is_online = '%s' where id = %s"" % (self.ip, (self.left_camera_id if self.left_camera_id else 'null'), (self.right_camera_id if self.right_camera_id else 'null'), ('T' if self.is_online  else 'F'), self.id)
+
+	def getInsertStatement(self):
+		return ""insert into camera (id, camera_IP, left_cam_id, right_cam_id) values(%s, '%s', %s, %s)"" % (self.id, self.ip, (self.left_camera_id if self.left_camera_id else 'null'), (self.right_camera_id if self.right_camera_id else 'null'))
+
+	def hasMotion(self):
+		return self.has_motion
+
+	def setHasMotion(self, b):
+		self.has_motion = b
+
+	def hasPredictedMotion(self):
+		return self.has_predicted_motion
+
+	def setHasPredictedMotion(self, b):
+		self.has_predicted_motion = b
+"
+Person_Identification_System Person_Identification_System/VideoController/camera.py,"# camera.py
+# 4/10 9:51pm LH - person tracking enhancement and some comment
+# 4/13 8:49pm JL - modified label assgignment logic to reuse original label for the same person at new camera.
+# 4/16 8:07pm JD - better detection of when someone leaves view and more accurate label reuse
+# 4/17 9:00pm LH,JS - Fixed the get_label query to update the has_arrived correctly
+# 4/18 7:46pm SH,JL - add better matching logic when additional people come into view of a camera
+import sys
+sys.path.append("".."")
+import cv2
+import datetime
+import numpy as np
+import imutils
+import time, os
+from threading import Lock
+from shared.CameraDbRow import CameraDbRow
+from shared.ActivityDbRow import ActivityDbRow
+import face_recognition
+
+port=5001
+if 'PORT' in os.environ:
+	port=int(os.environ['PORT'])
+
+def whichHalf(x):
+	if x < 128:
+		return 0
+	else:
+		return 1
+
+# used as part of the prediction algorithm and also to help facility keeping the same person labeled correctly
+def distance(p1, p2):
+	# calculates the distance between two points
+	return ((p2[0]-p1[0])**2+(p2[1]-p1[1])**2)**0.5
+
+#an instance of this class manages the camera hardware
+class VideoCamera(object):
+	def __init__(self, cv2_index, cameraDetails, mysql):
+		# Using OpenCV to capture from device identified by cv2_index.  Some laptops have a built in camera in addition
+		# to the usb camera we are using and these cameras are assigned an integer value starting with 0
+		self.cameraDetails = cameraDetails # the db info about this particular camera - see CameraDbRow for more info
+		self.mysql = mysql # mysql db reference
+		self.shutItDown = False # as long as this flag is false the camer will keep running
+		self.camera = cv2.VideoCapture(int(cv2_index)) #a cv2 specific class for talking to camera hardware
+		self.net = cv2.dnn.readNetFromCaffe(""MobileNetSSD_deploy.prototxt.txt"", ""MobileNetSSD_deploy.caffemodel"")
+		# initialize the list of class labels MobileNet SSD was trained to
+		# detect, then generate a set of bounding box colors for each class
+		
+		ret, self.no_video = cv2.imencode('.jpg', cv2.imread(os.path.realpath(""./no_video.jpg""))); #set the no_video image to display when the camer is off
+		self.jpeg = self.no_video
+		self.capturing=False #the initial state is that no capturing is happening until the start method is activated
+		self.lock = Lock() # a lock used when allowing access to the video feed by the browser
+		self.tracked_list = [] # the list of currently tracked activities ( simultaneous people refrences )
+		self.used_activity = [] # of the activities being tracked, on each frame this list keeps track of the activities that are still active, all other activities represent people who have left
+		self.recently_left = None # this keeps track of the person that most recently left and is used to detect if they happen to return again to the same camera
+
+	def __del__(self):
+		self.camera.release()
+
+	#given a activity id this method can load the corresponding row from the database into an ActivityDbRow instance
+	#used when we are trying to determine if we are seeing the same recently left person return
+	def loadActivityDb(self, id):
+		a = ActivityDbRow()
+		a.setID(id)
+		cursor = self.mysql.connect().cursor()
+		cursor.execute(a.getSelectStatement())
+		data = cursor.fetchone()
+		if data:
+			a = ActivityDbRow(data)
+		return a
+
+	#insert a new activity in the tracking table
+	#after the insert we must select the assigned id back into the activity record for future use
+	def insertActivity(self, activity):
+		conn = self.mysql.connect()
+		cursor = conn.cursor()
+		cursor.execute(activity.getInsertStatement())
+		conn.commit()
+		cursor = self.mysql.connect().cursor()
+		# raw_time field is an alternate key that allows us to find the newly inserted row and get it's id
+		sql = ""select id from tracking where raw_time = '%s' and camera_id = %s"" % (activity.getStart_time(), activity.getCamera_id())
+		cursor.execute(sql)
+		data = cursor.fetchone()
+		if data:
+			activity.setID(data[0])
+
+	#update a preexisting activity in the tracking table
+	def saveActivity(self, activity):
+		if activity.getID():
+			conn = self.mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(activity.getUpdateStatement())
+			conn.commit()
+
+	def saveRecoveredActivity(self, activity):
+		if activity.getID():
+			conn = self.mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(""update tracking set end_time = null, next_camera_id = null, has_arrived = 'F' where id = %s"" % activity.getID())
+			conn.commit()
+
+	#We use this to interact with the neural net data returned form cv2 to build up the list of starting rectangle coordinates for all detected people
+	#this method is called up front to know ahead of the detection logic how many people we are dealing with
+	def get_all_detected_points(self, detections, h, w):
+		# filter out weak detections by ensuring the confidence is
+		# greater than the minimum confidence 
+		points = []
+		for i in np.arange(0, detections.shape[2]):
+			confidence = detections[0, 0, i, 2]
+			if confidence > 0.2:
+				idx = int(detections[0, 0, i, 1])
+				if confidence > 0.5 and (idx == 15): # at this point we know we are dealing with a person ( see similar logic below with comments )
+					box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+					points.append(box.astype(""int"")[0:2])
+
+		return points
+		
+	# look for a face inside the rectangle bounding a person.
+	# using the location of the face, find a smaller region 
+	# rougly where the chest should be to detect shirt color
+	# def identify(self, sub_frame, cv2):
+	# 	BLUE=(255, 0, 0)
+	# 	SHIRT_DY = 1.75;	# Distance from top of face to top of shirt region, based on detected face height.
+	# 	SHIRT_SCALE_X = 0.6;	# Width of shirt region compared to the detected face
+	# 	SHIRT_SCALE_Y = 0.6;	# Height of shirt region compared to the detected face
+	# 	label = None
+	# 	try:
+	# 		gray = cv2.cvtColor(sub_frame, cv2.COLOR_BGR2GRAY)
+	# 		gray = cv2.GaussianBlur(gray, (21, 21), 0)
+	# 		face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml')
+	# 		faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+	# 		for (x,y,w,h) in faces:
+	# 			x = x + int(0.5 * (1.0-SHIRT_SCALE_X) * w);
+	# 			y = y + int(SHIRT_DY * h) + int(0.5 * (1.0-SHIRT_SCALE_Y) * h);
+	# 			w = int(SHIRT_SCALE_X * w);
+	# 			h = int(SHIRT_SCALE_Y * h);
+	# 			cv2.rectangle(sub_frame, (x, y), (x+w, y+h), BLUE, 1)
+	# 			label = ""Person %s"" % self.getIdentitiyCode(sub_frame[y:(y+h),x:(x+w)])
+	# 			print(label)
+	# 	except Exception:
+	# 		None
+	# 	return label
+
+
+	def identify(self, sub_frame, cv2):
+		BLUE=(255, 0, 0)
+		SHIRT_DY = 1.75;	# Distance from top of face to top of shirt region, based on detected face height.
+		SHIRT_SCALE_X = 0.6;	# Width of shirt region compared to the detected face
+		SHIRT_SCALE_Y = 0.6;	# Height of shirt region compared to the detected face
+		label = None
+		# Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
+		rgb_frame = sub_frame[:, :, ::-1]
+
+		# Find all the faces and face enqcodings in the frame of video
+		face_locations = face_recognition.face_locations(rgb_frame)
+		face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+		# Loop through each face in this frame of video
+		for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+			x = left
+			y = top
+			w = right-left
+			h = bottom-top
+			x = x + int(0.5 * (1.0-SHIRT_SCALE_X) * w);
+			y = y + int(SHIRT_DY * h) + int(0.5 * (1.0-SHIRT_SCALE_Y) * h);
+			w = int(SHIRT_SCALE_X * w);
+			h = int(SHIRT_SCALE_Y * h);
+			cv2.rectangle(sub_frame, (x, y), (x+w, y+h), BLUE, 1)
+			label = ""Person %s"" % self.getIdentitiyCode(sub_frame[y:(y+h),x:(x+w)])
+
+		return label
+
+	def saveActivityLabel(self, t):
+		conn = self.mysql.connect()
+		cursor = conn.cursor()
+		print(""saving %s"", t.getLabel())
+		cursor.execute(""update tracking set label = '%s' where id = %s"" % (t.getLabel(), t.getID()))
+		conn.commit()
+
+	#given a subregion ( at chest level ) we calculate the average pixel color and then
+	# use that to index down to a numeric value in the range of 1-6.
+	def getIdentitiyCode(self, img):
+		avg_color_per_row = np.average(img, axis=0)
+		avg_color = np.average(avg_color_per_row, axis=0)
+		(b, g, r) = avg_color
+		print(""%s %s %s"" % (r, g, b))
+		if r < 128 and b < 128 and g < 128:
+			return 1
+		elif r > 200 and b > 200 and g > 200:
+			return 2
+		elif r > b and r > g:
+			return 3
+		elif b > g and b > r:
+			return 4
+		elif g > b and g > r:
+			return 5
+		else:
+			return 6
+
+	#start contains the main camera loop and is called by our background thread - see main.py for how it gets called
+	def start(self):
+		GREEN = (0,255,0) # a color value for drawing our green boxes
+		BLUE=(0, 0, 255)
+		#each loop is a frame of video - do we see people in this frame?
+		while self.camera.isOpened(): # loop until the camer is closed
+			self.used_activity = [] # initialize to an empty list on each frame
+			if self.shutItDown: # when this flag is true we shutdown camera and then the loop exits
+				self.camera.release()
+				break
+
+			self.capturing = True # indicate to the outside world that we are capturing a feed from the video hardware
+			(grabbed, frame) = self.camera.read() #read a frame of video from cv2 camera instance
+			if not grabbed: # if no frame is returned this will be false and we'll loop back to the top of the while loop
+				continue
+			# grab the frame from the threaded video stream and resize it
+			# to have a maximum width of 400 pixels
+			frame = imutils.resize(frame, width=400)
+
+			# grab the frame dimensions and convert it to a blob
+			(h, w) = frame.shape[:2]
+			blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
+				0.007843, (300, 300), 127.5)
+
+			# pass the blob through the network and obtain the detections and
+			# predictions
+			self.net.setInput(blob)
+			detections = self.net.forward()
+			# count how many people we are tracking up front here
+			all_detected_points = self.get_all_detected_points(detections, h, w)
+			# initialize detected value of the activities we are tracking to false up front and those that are 
+			# still false at the end of the loop are activities we may no longer be observiing
+			for t in self.tracked_list:
+				t.set_detected(False)
+
+			# loop over the detections
+			for i in np.arange(0, detections.shape[2]):
+				# extract the confidence (i.e., probability) associated with
+				# the prediction
+				confidence = detections[0, 0, i, 2]
+
+				# filter out weak detections by ensuring the `confidence` is
+				# greater than the minimum confidence
+				if confidence > 0.2:
+					# extract the index of the class label from the
+					# `detections`, if it's 15 then we know it's a person
+					idx = int(detections[0, 0, i, 1])
+					# the rectangle bounding the person
+					box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+					#extract into variables
+					(startX, startY, endX, endY) = box.astype(""int"")
+					if confidence > 0.5 and (idx == 15):
+						#we've found a person with a confidence level greater than 50 percent
+						rect_start = (startX, startY) # rectangle start coordinate upper left
+						rect_end = (endX, endY) # rectangle end coordinate - lower right
+
+						#we use this function call to associate the bounding box we are working on 
+						#right now with the closest activity from the previous frame
+						#if no previous activities are being tracked then a new activity is created
+						newLabel = self.identify(frame[startY:endY,startX:endX], cv2)
+						t = self.find_closest_tracked_activity(rect_start, newLabel, all_detected_points)
+						#only use a label if we found one
+						if newLabel != None:
+							t.setLabel(newLabel)
+							self.saveActivityLabel(t)
+						t.set_detected(True) # mark it as being detected so we know it's an active tracking
+						t.setRect_start(rect_start)
+						t.setRect_end(rect_end)
+						# draw the prediction on the frame
+						label = ""{}: {:.2f}%"".format(t.getLabel(), confidence * 100)
+						cv2.rectangle(frame, rect_start, rect_end, GREEN, 2)
+
+						y = startY - 15 if startY - 15 > 15 else startY + 15
+						cv2.putText(frame, label, (startX, y),
+							cv2.FONT_HERSHEY_SIMPLEX, 0.5, GREEN, 2)
+
+			time.sleep(.1) # performance enhancement to only grab a frame once per 100 milliseconds ( 10 frames per second )
+			
+			# this logic tries to determine who left the camera
+			removed_from_tracking=[]
+			# loop over everthing we are currently tracking
+			for t in self.tracked_list:
+				if not t.was_detected(): #we think this one is gone
+					#guard againest false positives 'person should not have been in view for only 2 seconds'
+					if time.time() - t.getStart_time() > 2:
+						#which way did they go?
+						if self.went_left(t):
+							print(""went left heading to %s"" % self.cameraDetails.left_camera_id)
+							t.setNext_camera_id(self.cameraDetails.left_camera_id)
+							removed_from_tracking.append(t)
+						elif self.went_right(t):
+							print(""went right heading to %s"" % self.cameraDetails.right_camera_id)
+							t.setNext_camera_id(self.cameraDetails.right_camera_id)
+							removed_from_tracking.append(t)
+				elif t.has_left_the_scene():
+					#if someone leaves view and we don't detect it correctly, mark them arrived and remove from tracking
+					#the threshold for this is 5 times through the loop and we don't see them
+					t.set_has_arrived(True)
+					removed_from_tracking.append(t)
+
+			# now we can remove all activities that are truly gone and save them in the db
+			# this has to be done separate than the above loop because we can't modify the list 
+			# we are activly looping over
+			for t in removed_from_tracking:
+				#remove tracked entries from tacked_list that were in removed_from_tracking list
+				self.saveActivity(t)
+				t.setEnd_time(time.time())
+				self.recently_left = t
+				del self.tracked_list[self.tracked_list.index(t)]
+
+			#update the jpeg that we serve back to clients
+			self.lock.acquire()
+			ret, self.jpeg = cv2.imencode('.jpg', frame)
+			self.lock.release()
+
+		#while loop has exited so we are no longer capturing video, set the jpeg to the no_video image
+		self.capturing=False
+		self.lock.acquire()
+		self.jpeg = self.no_video
+		self.lock.release()
+	print('camera released.')
+
+	# used to get an integer identifier for a new tracked person
+	def get_next_person_number(self):
+		conn = self.mysql.connect()
+		cursor = conn.cursor()
+		cursor.execute(""select count(distinct label) from tracking"")
+		data = cursor.fetchone()
+		if data:
+			return int(data[0]) + 1
+
+	# get the label to display and to store in the tracking table
+	def get_label(self):
+		conn = self.mysql.connect()
+		cursor = conn.cursor()
+		camera_id = self.cameraDetails.getID()
+		l = ""Unknown""
+		#try to find the original label for this tracked person rather than creating a new label
+		#the label for an activity record (for this camera) that indicates that someone is supposed to arrive but hasn't, needs to be used as the label if one is found
+		#because we predicted someone would arrive and now someone has, we are assuming it's the same person so reuse the label
+		cursor.execute(""SELECT id, label from tracking where next_camera_id is not null and next_camera_id = %s and has_arrived = 'F' order by start_time asc limit 1"" % (camera_id))
+		data = cursor.fetchone()
+		if data:
+			previous_id = data[0]
+			# use this label instead of the one we were going to use
+			l = data[1]
+			#update the prediction logic so that the yellow indicator turns off at the same time the motion indicator turns on at this camera
+			if previous_id:
+				conn.cursor().execute(""update tracking set has_arrived = 'T' where id = %d"" % previous_id)
+				conn.commit()
+		return l
+
+	#method to find a tracking activity record that corresponds with the person detected in this frame represented by rect_start and newLabel
+	def find_closest_tracked_activity(self, rect_start, newLabel, all_detected_points):
+		#populate a variable with the number of detected people in frame at this time
+		detected_person_count = len(all_detected_points)
+		#remove rect_start from all_detected_points - any points in the list that are not rect_start are kept by this lambda expression
+		all_detected_points_except_this_one = list(filter(lambda x: x[0] != rect_start[0] or x[1] != rect_start[1], all_detected_points))
+		#find all the traced activities not yet paired up with a person in this frame
+		self.unused_tracked_list = list(set(self.tracked_list) - set(self.used_activity))
+		# if list is empty then just add a new activity
+		if not self.tracked_list:
+			return self.begin_new_tracking(rect_start)
+		else:
+			# otherwise use the distance formula to find the tracked activity that is closest to this new point
+			closest_t = None
+			for t in self.unused_tracked_list:
+				if closest_t:
+					#first find the next closest match
+					closest_t = t if distance(t.getRect_start(), rect_start) < distance(closest_t.getRect_start(), rect_start) else closest_t
+					#use if the labels match.  This keeps a ""swap"" from happening when multiple people are close together
+					if newLabel != None and closest_t.getLabel() == newLabel:
+						self.used_activity.append(closest_t)
+						return closest_t # just return this one because it must be the match
+				else:
+					closest_t = t
+
+			#we might not want to use this one if it's closer to someone else
+			#and we are tracking more than one person
+			more_people_than_activities = detected_person_count > len(self.tracked_list)
+			#if the activity found above is actually closer to one of the other people in frame, then don't pair it to this person, instead create a new one
+			if not closest_t or (more_people_than_activities and self.is_this_activity_closer_to_someone_else(closest_t, all_detected_points_except_this_one, rect_start)):
+				print(more_people_than_activities)
+				print(closest_t)
+				closest_t = self.begin_new_tracking(rect_start)
+
+			#mark it as used here so that the next pass through the detection loop above, we don't try to use it again
+			self.used_activity.append(closest_t)
+			return closest_t
+
+	#search through the list ""the_others"" and find any matches that are closer to ""activity"" than ""me""
+	def is_this_activity_closer_to_someone_else(self, activity, the_others, me):
+		#closeness is determined by using the upper left rectangle coordinates and the distance formula
+		activity_rect = activity.getRect_start()
+		#find the distance between me and the activity that I am being matched with
+		distance_to_me = distance(activity_rect, me)
+		# use that distance to filter out other matches that are closer
+		matches = list(filter(lambda x: distance(activity_rect, x) < distance_to_me, the_others))
+		return len(matches) > 0 # if any were found, return true otherwise false
+
+	#begin a new ActivityDbRow instance to track a new person in frame
+	def begin_new_tracking(self, rect_start):
+		t = None
+		#see if a recently leaving activity has returned
+		if self.recently_left:
+			d = distance(rect_start, self.recently_left.getRect_start())
+			# did they return close to where they left?
+			if d < 100 and time.time() - self.recently_left.getEnd_time() < 6: # did they return in a reasonable amount of time?
+			
+				#check to see if they've arrived at their expected destination before trying to reuse here
+				#if they arrived at the predicted camera then they are probably not returning to this one
+				a = self.loadActivityDb(self.recently_left.getID())
+				if not a.get_has_arrived():
+					#since that is not the case, lets reuse the previous tracking record and unset the end time and predicted next camera
+					t = self.recently_left
+					t.setEnd_time(None)
+					t.setNext_camera_id(None)
+					self.saveRecoveredActivity(t)
+
+				#blank out the recently_left field to indicate that we no longer expect someone to return soon
+				self.recently_left = None
+
+		#if no previous activity found then create a new one
+		if not t:
+			t = ActivityDbRow()
+			t.setCamera_id(self.cameraDetails.getID())
+			t.setLabel(self.get_label())
+			t.setRect_start(rect_start)
+			t.setStart_time(time.time())
+			self.insertActivity(t)
+
+
+		#keep track of the activity
+		self.tracked_list.append(t)
+		
+		return t
+
+	#this simple calculation decides if a recently leaving person went left based on the fact that their 
+	# bottom right x coordinate is greater than the mid point of the frame
+	def went_left(self, activity):
+		return (activity.getRect_end()[0] > 200)
+
+	#this simple calculation decides if a recently leaving person went right based on the fact that their 
+	# top left x coordinate is less than the mid point of the frame
+	def went_right(self, activity):
+		return (activity.getRect_start()[0] < 200)
+
+	#method called from flask main to toggle a flag causing the start ""while"" loop to exit and shut down the camera
+	def stop(self):
+		self.shutItDown = True
+
+	# getter method fir the capturing boolean field
+	def is_capturing(self):
+		return self.capturing
+
+	# when the browser ""polls"" the flask app for a frame of video, it is retrieved by calling this method
+	# We use a ""lock"" here because jpeg might be in the middle of an update by the camera thread even
+	# at the same time that the browser is trying to access it.
+	def get_frame(self):
+		self.lock.acquire()
+		bytes = self.jpeg.tobytes()
+		self.lock.release()
+		return bytes
+"
+Person_Identification_System Person_Identification_System/VideoController/main.py,"# main.py
+# 4/11 6:55pm SH & JD - added extra call to updateDetailInDb()
+
+import sys
+sys.path.append("".."")
+from flask import Flask, request, render_template, Response
+from flaskext.mysql import MySQL
+from camera import VideoCamera
+import cv2
+import time, os, threading, socket
+from flask_cors import CORS
+import configparser
+from shared.CameraDbRow import CameraDbRow
+import atexit
+
+config_file='config'
+if 'config_file_name' in os.environ:
+	config_file=os.environ['config_file_name']
+
+#read in parameters form the config file
+config = configparser.ConfigParser()
+config.read(config_file)
+# set up flask and mysql
+app = Flask(__name__)
+CORS(app)
+mysql = MySQL()
+app.config['MYSQL_DATABASE_USER'] = config['DB']['user']
+app.config['MYSQL_DATABASE_PASSWORD'] = config['DB']['password']
+app.config['MYSQL_DATABASE_DB'] = config['DB']['schema']
+app.config['MYSQL_DATABASE_HOST'] = config['DB']['host']
+mysql.init_app(app)
+
+#hacky way to get my own ip address - connect to mysql and then disconnect
+def get_ip_address():
+	global config
+	testIp = config['DB']['host']
+	testPort = 3306
+	#Only connect to the db as the test Ip when it's not localhost.  If it's localhost, then use googles dns.  
+	#We don't always use googles dns because we might not have an internet connection.
+	if testIp == 'localhost' or testIp == '127.0.0.1':
+		print('using google dns')
+		testIp = '8.8.8.8'
+		testPort = 80
+
+	#initialize ip to what the ip found using this method
+	ip = socket.gethostbyname(socket.gethostname())
+	print(ip)
+	#then try a more advanced method because it's more likely to find the right ip
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect((testIp, testPort))
+		ip = s.getsockname()[0]
+		s.close()
+	except:
+		None
+
+	return ip
+
+#in order to facilitate running more than one VideoController on the same computer, 
+#this method will allow for a flexible port assignment
+def get_port():
+	port = ""5001""
+	if 'PORT' in os.environ:
+		port = os.environ['PORT']
+	return port
+
+#Called to store specific details about this camer in the database
+def updateDetailsInDb():
+	global mysql, config
+	cameraDetails = None
+	try:
+		i=0
+		cameraDetails = CameraDbRow()
+		cameraDetails.setID(config['APP']['camera_id'])
+		cameraDetails.setIP(""%s:%s"" % (get_ip_address(), get_port()))
+		if 'left_camera_id' in config['APP']:
+			cameraDetails.setLeftCameraID(config['APP']['left_camera_id'])
+		if 'right_camera_id' in config['APP']:
+			cameraDetails.setRightCameraID(config['APP']['right_camera_id'])
+		cameraDetails.setIsOnline(True)
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		#see if this camera is already in the db and update it instead of inserting it
+		cursor.execute(cameraDetails.getSelectStatement())
+		data = cursor.fetchone()
+		if data:
+			cursor.execute(cameraDetails.getUpdateStatement())
+		else:
+			cursor.execute(cameraDetails.getInsertStatement())
+		conn.commit()
+	except:
+		print(""Unexpected error:"", sys.exc_info())
+	return cameraDetails
+
+#global variables to hold onto a reference to the camera and camera details 
+camera=None
+cameraDetails=None
+
+#called by the shutdown flask route to stop the video camera hardware
+def shutdownCamera():
+	global mysql, camera
+	try:
+		cameraDetails.setIsOnline(False)
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.execute(cameraDetails.getUpdateStatement())
+		conn.commit()
+		if camera:
+			camera.stop()
+			camera = None
+	except:
+		print(sys.exc_info())
+
+#a hook to try and shutdown the camer if the video controller exits ( doesn't seem to work on windows )
+atexit.register(shutdownCamera)
+
+#during startup we update the camera details in the database and return a reference to store for later use by this flask application
+cameraDetails = updateDetailsInDb()
+
+#if this happens, we have a camera id collision and this camera id is already running on the network
+if not cameraDetails:
+	print(""Not able to start video controller. Make sure this controller has a unique camera ID in config."")
+	exit()
+
+def countCameras():
+	global config, mysql, camera, cameraDetails
+	count = 0
+	for i in range(0, 3):
+		try:
+			x = cv2.VideoCapture(int(i))
+			if x.get(cv2.CAP_PROP_FPS) > 0:
+				count+=1
+		except:
+			None
+	return count
+
+#a method called by flask to start the thread that manages the camera
+def checkCamera():
+	global config, mysql, camera, cameraDetails
+	# this allows the method to be called more than once without starting an additional camera thread
+	if not camera:
+		cv2_index = config['APP']['cv2_index'] if 'cv2_index' in config['APP'] else 0
+		camera = VideoCamera(cv2_index, cameraDetails, mysql)
+		#the main camera loop in the start method is invoked here by the thread
+		thread = threading.Thread(target=camera.start)
+		thread.daemon = True
+		thread.start()
+	#this method also updates the database with current state of this camera instance
+	updateDetailsInDb()
+
+# a flask route for shutting down this camera hardware - called by the main ui when the user clicks the ""on"" link
+@app.route('/shutdown')
+def shutdown():
+	shutdownCamera()
+	return 'Camera stopped.'
+
+# a flask route for starting this camera hardware - called by the main ui when the user clicks the ""off"" link
+@app.route('/')
+def index():
+	checkCamera()
+	return render_template('index.html') 
+
+#serves up frames of video to the browser
+def gen(camera):
+	frame = None
+	while True:
+		if not frame:
+			time.sleep(.3)
+		frame = camera.get_frame()
+
+		yield (b'--frame/r/n'
+					 b'Content-Type: image/jpeg/r/n/r/n' + frame + b'/r/n/r/n')
+
+#entry point to get the video feed returned by the ""gen"" method
+@app.route('/video_feed')
+def video_feed():
+	checkCamera()
+	return Response(gen(camera),
+										mimetype='multipart/x-mixed-replace; boundary=frame')
+"
+Person_Identification_System Person_Identification_System/WebView/main.py,"# main.py
+# 4/11 6:55pm SH & JD - Work realated with camera link ajax loding
+# 4/11 7:36pm JD - work related to the prediction indicator
+# 4/13 8:51pm JL - fixed a small bug in the querry of getCameraListWithPredictedMotion()
+# 4/15 5:05pm LH - added method to load activity from database and added route to sent it back to the browser
+# 4/16 6:34pm JD - updated query to exclude activity where the expected person has arrived
+# 4/18 8:00pm JL - added a reset method for resetting the activity table
+
+from flask import Flask, jsonify, render_template, Response, jsonify,json, redirect
+from flaskext.mysql import MySQL
+import time, socket, sys
+import os
+import configparser
+sys.path.append("".."") #Add my parent folder so that I can get access to shared classes
+from shared.CameraDbRow import CameraDbRow
+from shared.ActivityDbRow import ActivityDbRow
+
+# read in the contents of the config file so we know how to find the database
+config = configparser.ConfigParser()
+config.read('config')
+# configure the mysql database connection and the flask framework
+mysql = MySQL()
+app = Flask(__name__)
+app.config['MYSQL_DATABASE_USER'] = config['DB']['user']
+app.config['MYSQL_DATABASE_PASSWORD'] = config['DB']['password']
+app.config['MYSQL_DATABASE_DB'] = config['DB']['schema']
+app.config['MYSQL_DATABASE_HOST'] = config['DB']['host']
+
+#clear the camera and tracking tables on each restart to make demos easier
+mysql.init_app(app)
+conn = mysql.connect()
+cursor = conn.cursor()
+cursor.execute(""delete from tracking"")
+cursor.execute(""delete from camera"")
+conn.commit()
+
+# connect ot the database and read in all the camera info
+def getCameraList():
+	global mysql
+	cursor = mysql.connect().cursor()
+	cursor.execute(""SELECT * from camera order by id"")
+	data = cursor.fetchall()
+	camera_list=[]
+	# these lists contain camera ids for green (motion detected) cameras or yellow (predicted arrival) cameras
+	cameras_with_motion = getCameraListWithMotion()
+	cameras_with_predicted_motion = getCameraListWithPredictedMotion()
+
+	#loop of the data from the db and create each CameraDbRow instance and add to the list
+	for d in data:
+		c = CameraDbRow(d)
+		camera_list.append(c)
+		if c.getID() in cameras_with_motion:
+			c.setHasMotion(True)
+		if c.getID() in cameras_with_predicted_motion:
+			c.setHasPredictedMotion(True)
+	return camera_list
+
+#get the list of ids of cameras with motion happening
+def getCameraListWithMotion():
+	global mysql
+	cursor = mysql.connect().cursor()
+	cursor.execute(""SELECT distinct camera_id from tracking where end_time is null and start_time > DATE_SUB(current_timestamp, INTERVAL 5 MINUTE) order by camera_id desc"")
+	data = cursor.fetchall()
+	return [c for sublist in data for c in sublist]
+
+#get the list of ids of cameras with predicted arrivals pending
+def getCameraListWithPredictedMotion():
+	global mysql
+	cursor = mysql.connect().cursor()
+	cursor.execute(""SELECT distinct a.next_camera_id from tracking a left join tracking b on a.next_camera_id = b.camera_id and a.label = b.label where a.next_camera_id is not null and b.camera_id is null and a.has_arrived = 'F' and a.end_time > DATE_SUB(current_timestamp, INTERVAL 1 MINUTE)"")
+	data = cursor.fetchall()
+
+	# ugly syntax for collapsing list of lists into a simple list of ids
+	# [[1], [2], [3]] becomes [1, 2, 3]
+	return [c for sublist in data for c in sublist]
+
+#get the activity data form the database to render at the foot of the page
+def getActivityList():
+	global mysql
+	cursor = mysql.connect().cursor()
+	cursor.execute(""SELECT id, label, start_time, end_time, camera_id, next_camera_id, has_arrived from tracking order by start_time desc limit 20"")
+	activity_list = []
+	data = cursor.fetchall()
+	for d in data:
+		a = ActivityDbRow(d)
+		activity_list.append(a)
+	return activity_list
+
+#flask route for the main index page
+@app.route('/')
+def index():
+	camera_list = getCameraList()
+	# get our ip to render on the main view so it's easier to setup each videoController ( they all need the ip of the database )
+	ip=socket.gethostbyname(socket.gethostname())
+	return render_template('index.html', camera_list=camera_list, database_ip=ip) 
+
+# route for viewing the feed of a specific camera by it's ""id""
+@app.route('/view_camera/<int:camera_id>')
+def view_camera(camera_id):
+	cursor = mysql.connect().cursor()
+	cursor.execute(""SELECT * from camera where id = "" + str(camera_id))
+	data = cursor.fetchone()
+	#we load the details for the specified camera and pass on to be rendered by the view.html template
+	return render_template('_view.html', camera_id=camera_id, data=data)
+	
+#Flask route for polling by Jquery to update the activity_list html
+@app.route('/activity')
+def activity():
+	activity_list = getActivityList()
+	return render_template('_activity.html', activity_list=activity_list)
+
+#route for rendering the camera link list including the indicators
+@app.route('/cameras')
+def cameras():
+	camera_list = getCameraList()
+	return render_template('_cameras.html', camera_list=camera_list)
+
+#route for home
+@app.route('/home')
+def home():
+	return render_template('_home.html')
+
+#a link for resetting ( clearing ) the tracking activity
+@app.route('/reset')
+def reset():
+        global mysql
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        cursor.execute(""delete from tracking"")
+        conn.commit()
+        return redirect(""/"")
+"
+PiSpy PiSpy/camera/stream.py,"import picamera
+import io
+import struct
+import time
+
+resolution = (640, 480)
+framerate = 10
+next_header_index = 0
+output = None
+
+def write_video(stream, start_time):
+    global next_header_index
+    with stream.lock:
+        first_frame = None
+        second_frame = None
+        third_frame = None
+        for f in stream.frames:
+            if f.header and f.index >= next_header_index:
+                if second_frame and first_frame:
+                    third_frame = f
+                    break
+                if not second_frame and first_frame:
+                    second_frame = f
+                if not first_frame:
+                    first_frame = f
+        if first_frame and second_frame and third_frame:
+            print('writing')
+            stream.seek(first_frame.position)
+            # figure out the exact size needed
+            # contents = stream.read(second_frame.position - first_frame.position)
+            contents = stream.read()
+            content_length = len(contents)
+            header = struct.pack('id', content_length, start_time + first_frame.index / framerate)
+            contents = header + contents
+            output.write(contents)
+            output.flush()
+            next_header_index = second_frame.index
+
+with picamera.PiCamera() as camera:
+    stream = picamera.PiCameraCircularIO(camera, seconds=20)
+    camera.resolution = resolution
+    camera.framerate = framerate
+    camera.start_recording(stream, format='h264')
+    start_time = round(time.time(), 1)
+    output = io.open('/var/PiSpy PiSpy/camera/data', 'wb')
+    try:
+        while True:
+            camera.wait_recording(1)
+            write_video(stream, start_time)
+    finally:
+        camera.stop_recording()
+"
+PiSpy PiSpy/microphone/improve_pcm_quality.py,"f = open('a.pcm', 'rb')
+
+array = []
+array += f.read()
+
+def cut(array, big, small):
+    # caps the biggest and smallest values
+    pivot = 0
+    quiet = 128
+    adjustment = pivot - quiet
+    clipped_array = [max(min(val, big), small) for val in array]
+    for i in range(len(clipped_array)):
+        #print(clipped_array[i])
+        # adjust for neutral value
+        new_val = clipped_array[i] + adjustment
+        # amplify
+        new_val = new_val * 128 / (big - small)
+        # back to unsigned
+        clipped_array[i] = new_val + quiet
+        if (clipped_array[i] > 255 or clipped_array[i] < 0):
+            print(clipped_array[i])
+    return clipped_array
+
+def low_pass_filter(array):
+    p_filter = [1/6, 2/3, 1/6]
+    #p_filter = [1/12, 1/6, 1/2, 1/6, 1/12]
+    f_len = len(p_filter)
+    assert f_len % 2 == 1
+
+    middle = int(f_len / 2) + 1
+
+    filtered_array = [0] * len(array)
+    for i in range(middle - 1, len(array) - (middle - 1)):
+        total = 0
+        for j in range(middle - f_len, f_len - middle + 1):
+            total += p_filter[j + middle - 1] * array[i + j]
+        filtered_array[i] = round(total)
+    return filtered_array
+
+diff = 30
+middle = 128
+array = cut(array, middle + diff, middle - diff)
+# instead of low pass perhaps we should try median pass
+array = low_pass_filter(array)
+f2 = open('improved.raw', 'wb')
+f2.write(bytearray(array))
+f2.close()
+"
+PiSpy PiSpy/transmission/cloud_client.py,"import threading
+import io
+import socket
+import struct
+import re
+
+data_path = '/var/PiSpy PiSpy/'
+i = 0
+serial = ''
+socket_info = ('104.208.29.179', 27008)
+
+def transmit(data, timestamp):
+    header_size = 24 # in bytes
+    args = ['iid16b', len(data), header_size, timestamp]
+    args += serial
+    header = struct.pack(*args)
+    try:
+        client = socket.socket()
+        client.connect(socket_info)
+        client.send(header)
+        client.send(data)
+        client.shutdown(socket.SHUT_RDWR)
+        client.close()
+    except Exception as e:
+        print(e)
+        print('could not connect to network')
+        pass # TODO deal with saving things if we can't talk
+
+def read_camera(path):
+    print(path)
+    with io.open(path, 'rb') as f:
+        while True:
+            print('reading ' + path)
+            struct_format = 'id'
+            header = f.read(struct.calcsize(struct_format))
+            header = struct.unpack(struct_format, header)
+            length = header[0]
+            time = header[1]
+            transmit(f.read(length), time)
+
+def read_microphone(path):
+    print(path)
+
+def get_serial():
+    # don't check for errors because this needs to work or we need to know it didn't
+    f = open('/proc/cpuinfo')
+    match = re.search('Serial/s*: ([0-9a-f]{16})', f.read())
+    global serial
+    serial = bytes(match.groups()[0], 'utf-8')
+
+
+
+get_serial()
+
+data_pipes = [
+    (data_path + 'camera/data', read_camera),
+    (data_path + 'microphone/data', read_microphone),
+]
+
+for part, function in data_pipes:
+    threading.Thread(target=read, args=(f,)).start()
+
+"
+PiSpy PiSpy/humiture.py,"import subprocess, time
+
+# returns [temperature, humidity, timeCaptured]
+def getHumiture():
+	cmd = ['sudo', 'humiture', '11', '18']
+
+	sthp = subprocess.check_output(cmd)
+	sth = str(sthp).split(' ')
+	status = sth[0]
+	while status != ""b'OK"":
+		print(""Failed to read from sensor, trying again."")
+		time.sleep(1)
+		sthp = subprocess.check_output(cmd)
+		sth = str(sthp).split(' ')
+		status = sth[0]
+
+	sth.append(str(round(time.time())))
+	sth[2] = sth[2][:len(sth[2]) - 1]
+	sth = sth[1:]
+	return sth
+	    
+"
+PiSpy PiSpy/pispy-main.py,"import socket, time, serialNumber, queue, humiture
+
+#server = ('104.208.29.115', 27007)
+server = ('104.208.39.124', 27007)
+
+clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+clientsocket.connect(server)
+clientsocket.settimeout(5)
+
+serial = serialNumber.getSerialNumber();
+q = queue.Queue()
+
+humitureCmd = ['sudo','humiture','11','18']
+
+while True:
+	q.put(humiture.getHumiture()) # [temperature, humidity, timeCaptured]
+	while not q.empty():
+		
+		msg = q.get()
+		message = (serial + "";"" + msg[0] +  "";"" + msg[1] + "";"" + msg[2])
+		print(""Attempting to send to server: "" + message)
+		
+		try:
+			numSent = clientsocket.send(bytes(message, ""UTF-8""))
+			print(""Sent "" + str(numSent) + "" of "" + str(len(message)) + "" bytes."")
+			if str(numSent) != str(len(message)):
+				print(""Message not fully sent, reqeueing message now."")
+				q.put(msg)
+				break
+				
+		except Exception as e:
+			print(""Failed to send message. Error: "" + str(e)
+			      + ""/nAttempting to reestablish connection."")
+			q.put(msg)
+			try:
+				clientsocket.close()
+				print(""Socket Released."")
+			except Exception as e:
+				print(""Failed to release socket: "" + str(e))
+			finally:
+				try:
+					clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					clientsocket.connect(server)
+					print(""Connection reestablished."")
+				except Exception as e2:
+					print(""Failed to reestablish connection: "" + str(e2))
+			break
+		
+	time.sleep(60)
+
+clientsocket.close()
+"
+PiSpy PiSpy/pispy-test.py,"import socket, time, serialNumber, queue, random
+
+#server = ('104.208.29.115', 27007)
+server = ('104.208.39.124', 27007)
+
+clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+clientsocket.connect(server)
+clientsocket.settimeout(5)
+
+serial = serialNumber.getSerialNumber();
+q = queue.Queue()
+
+while True: 
+	q.put([str(random.randrange(18.0, 25.0)), str(random.randrange(0.0, 100.0)), str(round(time.time()))]) # [temperature, humidity, timeCaptured]
+	while not q.empty():
+		
+		msg = q.get()
+		message = (serial + "";"" + msg[0] +  "";"" + msg[1] + "";"" + msg[2])
+		print(""Attempting to send to server: "" + message)
+		
+		try:
+			numSent = clientsocket.send(bytes(message, ""UTF-8""))
+			print(""Sent "" + str(numSent) + "" of "" + str(len(message)) + "" bytes."")
+			if str(numSent) != str(len(message)):
+				print(""Message not fully sent, reqeueing message now."")
+				q.put(msg)
+				break
+				
+		except Exception as e:
+			print(""Failed to send message. Error: "" + str(e))
+			q.put(msg)
+			try:
+				clientsocket.close()
+				print(""Socket Released."")
+			except Exception as e:
+				print(""Failed to release socket: "" + str(e))
+			finally:
+				try:
+					clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					clientsocket.connect(server)
+					print(""Connection reestablished."")
+				except Exception as e2:
+					print(""Failed to reestablish connection: "" + str(e2))
+			break
+		
+	time.sleep(60)
+
+clientsocket.close()
+
+"
+PiSpy PiSpy/serialNumber.py,"# returns the raspberry pi's serial number
+def getSerialNumber():
+	serial = ""0000000000000000""
+	
+	f = open('/proc/cpuinfo', 'r')
+	for line in f:
+		if line[0:6] == 'Serial':
+			serial = line[10:26]
+	f.close()
+	
+	return serial
+"
+Raspberry_SPI Raspberry_SPI/AzurePi.py,"from azure.storage.blob import BlobService
+import RPi.GPIO as GPIO
+import time
+import picamera
+import datetime
+import io 
+import sendgrid
+from subprocess import call
+
+
+
+sg = sendgrid.SendGridClient('azure_36bec4ca49e2a25fd70d4331a2b52147@azure.com', 'Pjpij5c0fzMbyc9')
+
+blob_service = BlobService(account_name='iotdrive', account_key='V7VgIPbyLqakKi+8aIEFL8/3EF8HbPIplnM4KBV7tg9UoOCMG5yVNuFqIV53E6sju4hS1uz9KEkNnYUHlreM+Q==')
+
+def get_file_name(): 
+   return datetime.datetime.now().strftime(""%Y-%m-%d_%H.%M.%S"")
+
+sensor = 4
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(sensor, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+cam = picamera.PiCamera()
+stream = picamera.PiCameraCircularIO(cam, seconds=30)
+cam.start_recording(stream, format='h264')
+
+def motion_detected(sensor):
+	print ""detected""
+	cam.stop_recording()
+	fileName = get_file_name()
+	for frame in stream.frames:
+		if frame.header:
+			stream.seek(frame.position)
+			break
+	with io.open(fileName + '.h264', 'wb') as output:
+		while True:
+			data = stream.read1()
+			if not data:
+				break
+			output.write(data)
+	call('MP4Box -add ' + fileName + '.h264 ' + fileName + '.mp4', shell=True)
+	blob_service.put_block_blob_from_path(
+		'flagged',
+		fileName + '.mp4',
+		fileName + '.mp4',
+		x_ms_blob_content_type='video/mp4'
+	)
+	message = sendgrid.Mail()
+	message.add_to('Marvin Swords <swordsmarvin@gmail.com>')
+	message.set_subject('Alert')
+	message.set_text('Motion detected by the Security Device. Please refer to the provided Link to review the video. https://iotdrive.blob.core.windows.net/flagged/'+fileName+'.mp4')
+	message.set_from('Raspberry Spi <swordsmarvin@gmail.com>')
+	sg.send(message)
+	cam.start_recording(stream, format='h264')
+	
+
+GPIO.add_event_detect(sensor, GPIO.RISING, callback=motion_detected)
+
+previous_state = False
+current_state = False
+
+
+while True:
+	time.sleep(30)
+	cam.stop_recording()
+	fileName = get_file_name()
+	for frame in stream.frames:
+		if frame.header:
+			stream.seek(frame.position)
+			break
+	with io.open(fileName + '.h264', 'wb') as output:
+		while True:
+			data = stream.read1()
+			if not data:
+				break
+			output.write(data)
+	call('MP4Box -add ' + fileName + '.h264 ' + fileName + '.mp4', shell=True)
+	blob_service.put_block_blob_from_path(
+		'unflagged',
+		fileName + '.mp4',
+		fileName + '.mp4',
+		x_ms_blob_content_type='video/mp4'
+	)
+	time.sleep(0.1)
+	cam.start_recording(stream, format='h264')
+	
+
+
+
+"
