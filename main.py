@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./utils')
 from data_preprocessor.data_preprocessor import process_data
 from code_summarizer.code_summarizer import load_summarizer, summarize_dataset
 from language_encoder.language_encoder import load_encoder, encode, embed_dataset

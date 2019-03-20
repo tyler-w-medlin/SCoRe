@@ -5,8 +5,8 @@ import tensorflow as tf
 import os
 import warnings
 import sys
-sys.path.append('../')
-from utils.seq2seq_utils import load_text_processor, Seq2Seq_Inference
+sys.path.append('../utils')
+from seq2seq_utils import load_text_processor, Seq2Seq_Inference
 
 def load_summarizer(seq2seq_model_path, text_processor_path):
     """

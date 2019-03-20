@@ -1,6 +1,6 @@
 import sys
-sys.path.append('../')
-from utils.lang_model_utils import load_lm_vocab, Query2Emb, get_embeddings
+sys.path.append('../utils')
+from lang_model_utils import load_lm_vocab, Query2Emb, get_embeddings
 import torch
 import numpy as np
 from pathlib import Path
@@ -8,11 +8,11 @@ import logging
 
 def load_encoder(vocab_path, lang_model_path):
     """
-        Loads the language encoder for embedding strings
+    Loads the language encoder for embedding strings
 
-        Input: path to vocab, path to language model
+    Input: path to vocab, path to language model
 
-        Returns: Query2Emb object
+    Returns: Query2Emb object
 
     """
     #load vocab
@@ -34,25 +34,25 @@ def load_encoder(vocab_path, lang_model_path):
 
 def encode(lang_encoder, input_string):
     """
-        Reads in a string and returns the embedding
+    Reads in a string and returns the embedding
 
-        Input: Query2Emb object, input string
+    Input: Query2Emb object, input string
 
-        Returns: string embedding
+    Returns: string embedding
 
     """
     return lang_encoder.emb_mean(input_string)
-    
+
 
 def embed_dataset(lang_encoder, raw_docstrings_path, outfile_path):
     """
-        Embeds the provided dataset and writes it to a file
+    Embeds the provided dataset and writes it to a file
 
-        Input: Query2Emb object, path to docstring dataset, path of output file
+    Input: Query2Emb object, path to docstring dataset, path of output file
 
-        Returns: -----
+    Returns: -----
 
-        Outputs: dataset embedding file
+    Outputs: dataset embedding file
 
     """
     #load raw docstrings

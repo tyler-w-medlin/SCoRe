@@ -1,6 +1,6 @@
 import sys
-sys.path.append('../')
-from utils.general_utils import create_nmslib_search_index
+sys.path.append('../utils')
+from general_utils import create_nmslib_search_index
 import nmslib
 from pathlib import Path
 import numpy as np

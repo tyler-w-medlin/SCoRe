@@ -9,8 +9,8 @@ from tqdm import tqdm
 from nltk.tokenize import RegexpTokenizer
 from sklearn.model_selection import train_test_split
 import sys
-sys.path.append('../')
-from utils.general_utils import apply_parallel, flattenlist
+sys.path.append('../utils')
+from general_utils import apply_parallel, flattenlist
 
 def tokenize_docstring(text):
     """
