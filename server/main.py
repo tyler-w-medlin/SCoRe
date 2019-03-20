@@ -8,6 +8,19 @@ from flask_cors import CORS
 import json
 import os
 
+import searchInit
+
+
+# ---------------------------------------------
+# Initialize Search engine
+# - written by: Elliott
+# ---------------------------------------------
+
+engine = searchInit.searchEngineInit()
+
+# ---------------------------------------------
+# Server crap - Elliott
+# ---------------------------------------------
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -35,7 +48,7 @@ class Score(db.Model):
 
     def __str__(self):
         return str(self.to_dict())
-    
+
     def __repr__(self):
         return "<Score {}>".format(self.id)
 
@@ -68,4 +81,3 @@ def search():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
-
