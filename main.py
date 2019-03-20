@@ -43,7 +43,7 @@ if init_encoding == True:
     build_search_index(LANG_MODEL_EMB_PATH, LANG_MODEL_EMB_PATH)
 
 #Step 7 load search engine
-se = load_se(LANG_MODEL_EMB_PATH, PROCESSED_DATA_PATH, lang_encoder)
+se = load_se(LANG_MODEL_EMB_PATH, PROCESSED_DATA_PATH, PROCESSED_DATA_PATH, lang_encoder)
 
 #Step 8 search
 srch_flag = True

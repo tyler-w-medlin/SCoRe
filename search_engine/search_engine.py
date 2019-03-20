@@ -11,19 +11,23 @@ class SearchEngine:
     """
         Search engine class
         Attributes: Search_index - index of database
-                    data - docstring data for all functions
+                    docstring_data - docstring data for all functions
+                    function_data - original function dataset
                     query2emb - object containing language encoder for encoding search strings
         Functions:  search() - searches database using input search string.
                                Returns top 3 most relevant results and their corresponding keywords,
-                               and the cosine distance between the search string and results
+                               and the cosine distance between the search string and results,
+                               and prints the relevant function
     """
     def __init__(self,
                  nmslib_index,
-                 ref_data,
+                 docstring_data,
+                 function_data,
                  query2emb):
 
         self.search_index = nmslib_index
-        self.data = ref_data
+        self.docstring_data = docstring_data
+        self.function_data = function_data
         self.query2emb = query2emb
 
     def search(self, str_search, k=3): #k is number of search results returned
@@ -41,18 +45,40 @@ class SearchEngine:
 
         for idx, dist in zip(idxs, dists):
             print('Input string:', str_search, '\nKeywords:', self.query2emb.get_keywords(str_search),
-            '\nResult:', self.data[idx], f'cosine dist:{dist:.4f}\n---------------\n')
+            '\nResult:', self.docstring_data[idx], f'cosine dist:{dist:.4f}\n','\nFunction: \n---------------\n',
+            self.function_data[idx], '\n\n---------------\n')
 
-def load_se(datasetidx_path, ref_data_path, lang_encoder):
+def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encoder):
+    """
+        Load the search engine. reads in docstring/function data, parses out original
+        functions, and takes a language encoder object as input.
+
+        Input: path to folder containing dataset index, path to folder containing docstring data,
+        path to folder containing original function data, Query2Emb object
+        Return: SearchEngine object
+    """
     dataset_searchindex = nmslib.init(method='hnsw', space='cosinesimil')
     dataset_searchindex.loadIndex(datasetidx_path + '/dataset_searchindex.nmslib')
 
-    with open(ref_data_path + '/generated_docstrings.docstring', 'r') as f:
-        generated_docstrings = f.readlines() #Reference data
+    with open(docstring_data_path + '/generated_docstrings.docstring', 'r') as f:
+        generated_docstrings = f.readlines() #docstring data
 
-    se = SearchEngine(nmslib_index = dataset_searchindex,
-                        ref_data = generated_docstrings,
-                        query2emb = lang_encoder)
+    with open(function_data_path + '/all_functions_original_function.json', 'r') as f:
+        function_data_array = f.readlines() #function data
+
+    function_data = ''
+    #combine the lines read in from the json
+    for line in function_data_array:
+        function_data = function_data + line
+
+    #replace escaped characters
+    function_data = function_data.replace('\\n','\n')
+    function_data = function_data.replace('\\t','\t')
+    function_data = function_data.replace('\\"','\"')
+    function_data = function_data.replace('\\/','/')
+    function_data = function_data.split('\",\"')
+
+    se = SearchEngine(nmslib_index = dataset_searchindex, docstring_data = generated_docstrings, function_data = function_data, query2emb = lang_encoder)
 
     return se
 

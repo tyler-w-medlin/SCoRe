@@ -87,12 +87,12 @@ def write_to(df, filename, path):
     Helper function to write processed files to disk.
     Input: dataframe, name of output file, path to output folder
     Return: -----
-    Output: filename.function, filename_original_function.json.gz, filename.lineage
+    Output: filename.function, filename_original_function.json, filename.lineage
     """
     out = Path(path)
     out.mkdir(exist_ok=True)
     df.function_tokens.to_csv(out/'{}.function'.format(filename), index=False)
-    df.original_function.to_json(out/'{}_original_function.json.gz'.format(filename), orient='values', compression='gzip')
+    df.original_function.to_json(out/'{}_original_function.json'.format(filename), orient='values', compression=None)
     df.url.to_csv(out/'{}.lineage'.format(filename), index=False)
 
 
