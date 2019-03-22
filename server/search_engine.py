@@ -44,10 +44,23 @@ class SearchEngine:
         query = self.query2emb.emb_mean(str_search)
         idxs, dists = self.search_index.knnQuery(query, k=k)
 
+        results = {}
+        number = 1
+
         for idx, dist in zip(idxs, dists):
-            print('Input string:', str_search, '\nKeywords:', self.query2emb.get_keywords(str_search),
-            '\nResult:', self.docstring_data[idx], f'cosine dist:{dist:.4f}\n','\nFunction: \n---------------\n',
-            self.function_data[idx], '\n\n---------------\n')
+            results[number] = {
+                "keywords": self.query2emb.get_keywords(str_search),
+                "result": self.docstring_data[idx],
+                "relevancy": "{:0.4f}".format(1 - dist),
+                "raw_code": self.function_data[idx]
+            }
+            # print('Input string:', str_search, '\nKeywords:', self.query2emb.get_keywords(str_search),
+            # '\nResult:', self.docstring_data[idx], f'cosine dist:{dist:.4f}\n','\nFunction: \n---------------\n',
+            # self.function_data[idx], '\n\n---------------\n')
+
+            number += 1
+
+        return results
 
 
 
