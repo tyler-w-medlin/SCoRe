@@ -31,6 +31,9 @@ en-core-web-sm==2.1.0
 entrypoints==0.3
 fastai==0.6
 feather-format==0.4.0
+flask==1.0.2
+flask-cors==3.0.7   
+flask-sqlalchemy==2.3.2
 ftfy==4.4.3
 gast==0.2.2
 graphviz==0.10.1
