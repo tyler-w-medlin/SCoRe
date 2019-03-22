@@ -67,16 +67,17 @@ def send_hello():
 @app.route("/search", methods = ["POST"])
 def search():
     posted = json.loads(request.data.decode())
-    keywords = posted["search"].split()
 
-    queries = set()
-    for word in keywords:
-        for query in Score.query.filter(Score.keywords.contains(word)).all():
-            queries.add(query)
+    results = engine.search(posted["search"])
 
-    results = {}
-    for i in range(len(queries)):
-        results[str(i)] = queries.pop().to_dict()
+    # queries = set()
+    # for word in keywords:
+    #     for query in Score.query.filter(Score.keywords.contains(word)).all():
+    #         queries.add(query)
+
+    # results = {}
+    # for i in range(len(queries)):
+    #     results[str(i)] = queries.pop().to_dict()
 
     return jsonify(results)
 
