@@ -1,10 +1,10 @@
 # Cropped out by Elliott
-def searhEngineInit():
+def searchEngineInit():
     import sys
     # from data_preprocessor.data_preprocessor import process_data
     # from code_summarizer.code_summarizer import load_summarizer, summarize_dataset
-    from language_encoder.language_encoder import load_encoder, encode, embed_dataset
-    from search_engine.search_engine import SearchEngine, load_se, build_search_index
+    from language_encoder import load_encoder, encode, embed_dataset
+    from search_engine import SearchEngine, load_se, build_search_index
 
     LANG_MODEL_PATH = './data/lang_model'
     LANG_MODEL_EMB_PATH = './data/lang_model_emb'
