@@ -6,9 +6,9 @@ def searchEngineInit():
     from language_encoder import load_encoder, encode, embed_dataset
     from search_engine import SearchEngine, load_se, build_search_index
 
-    LANG_MODEL_PATH = './data/lang_model'
-    LANG_MODEL_EMB_PATH = './data/lang_model_emb'
-    PROCESSED_DATA_PATH = './data/processed_data'
+    LANG_MODEL_PATH = 'tools/data/lang_model'
+    LANG_MODEL_EMB_PATH = 'tools/data/lang_model_emb'
+    PROCESSED_DATA_PATH = 'tools/data/processed_data'
     # SEQ2SEQ_PATH = './data/seq2seq'
     # UNPROCESSED_DATA_PATH = './data/unprocessed_data'
 

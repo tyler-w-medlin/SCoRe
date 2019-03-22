@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 import nltk
 from nltk.corpus import stopwords
+import os
+THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
 class SearchEngine:
     """
@@ -46,8 +48,8 @@ class SearchEngine:
             print('Input string:', str_search, '\nKeywords:', self.query2emb.get_keywords(str_search),
             '\nResult:', self.docstring_data[idx], f'cosine dist:{dist:.4f}\n','\nFunction: \n---------------\n',
             self.function_data[idx], '\n\n---------------\n')
-            
-            
+
+
 
 def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encoder):
     """
@@ -59,12 +61,14 @@ def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encod
         Return: SearchEngine object
     """
     dataset_searchindex = nmslib.init(method='hnsw', space='cosinesimil')
-    dataset_searchindex.loadIndex(datasetidx_path + '/dataset_searchindex.nmslib')
 
-    with open(docstring_data_path + '/generated_docstrings.docstring', 'r') as f:
+    dataset_searchindex.loadIndex(os.path.join(THIS_FOLDER, datasetidx_path + '/dataset_searchindex.nmslib'))
+
+
+    with open(os.path.join(THIS_FOLDER, docstring_data_path + '/generated_docstrings.docstring'), 'r') as f:
         generated_docstrings = f.readlines() #docstring data
 
-    with open(function_data_path + '/all_functions_original_function.json', 'r') as f:
+    with open(os.path.join(THIS_FOLDER, function_data_path + '/all_functions_original_function.json'), 'r') as f:
         function_data_array = f.readlines() #function data
 
     function_data = ''

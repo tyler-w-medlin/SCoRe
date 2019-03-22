@@ -7,6 +7,9 @@ from flask_cors import CORS
 
 import json
 import os
+import sys
+sys.path.append('./tools')
+sys.path.append('../data/lang_model')
 
 import searchInit
 
