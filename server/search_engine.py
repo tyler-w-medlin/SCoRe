@@ -49,8 +49,7 @@ class SearchEngine:
 
         for idx, dist in zip(idxs, dists):
             results[number] = {
-                "keywords": self.query2emb.get_keywords(str_search),
-                "result": self.docstring_data[idx],
+                "keywords": self.docstring_data[idx],
                 "relevancy": "{:0.4f}".format(1 - dist),
                 "raw_code": self.function_data[idx]
             }
