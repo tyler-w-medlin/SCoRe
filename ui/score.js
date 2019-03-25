@@ -6,6 +6,11 @@ function sendData(){
     var displayString = "";
     var resultNum;
     var theNode;
+    var resultsList;
+
+    while (results.firstChild){
+        results.removeChild(results.firstChild);
+    }
 
     XHR.addEventListener('load', (event)=> {
         console.log("Data sent and response loaded");
@@ -21,15 +26,34 @@ function sendData(){
             searchResults = JSON.parse(XHR.response);
             //console.log(searchResults);
             resultNum = 0;
+            resultsList = new Array();
+            var i = 0;
             for (var property in searchResults) {
-                if(searchResults.hasOwnProperty(property)) {
-                    displayString = displayString + "Result Number: " + resultNum + "\n";
-                    displayString = displayString + searchResults[property]["keywords"] + "\n";
-                    displayString = displayString + searchResults[property]['raw_code'] + "\n";
-                    displayString = displayString + "--------------------------------------------------\n";
-                    resultNum++;
-                }
+                resultsList.push(searchResults[property]);
+                resultsList[i].keywords = resultsList[i].keywords.split(" ");
+                i++;
             }
+
+            //sorts by number of keywords
+            resultsList.sort((a, b)=>{
+                return b.relevancy - a.relevancy;
+            })
+
+
+            resultsList.forEach(result => {
+                displayString = displayString + "Result Number: " + resultNum + "\n"; //resultnumber
+                displayString = displayString + "Keywords: ";
+                result.keywords.forEach(keyword =>{
+                    displayString +=  keyword + " "; //keyword
+                })
+                displayString = displayString + "\nCode:\n";
+                displayString = displayString + "--------------------------------------------------\n";
+                displayString = displayString + result.raw_code + "\n"; //raw_code
+                displayString = displayString + "--------------------------------------------------\n";
+                displayString = displayString + "--------------------------------------------------\n";
+                resultNum++;
+            });
+
             theNode = document.createTextNode(displayString);
             results.appendChild(theNode);
         }
