@@ -22,7 +22,7 @@ function sendData(){
 
     XHR.onreadystatechange = ()=> {
         if(XHR.readyState == 4){
-            console.log(XHR.response);
+            //console.log(XHR.response);
             searchResults = JSON.parse(XHR.response);
             //console.log(searchResults);
             resultNum = 0;
