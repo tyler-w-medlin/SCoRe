@@ -76,12 +76,22 @@ def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encod
 
     dataset_searchindex.loadIndex(os.path.join(THIS_FOLDER, datasetidx_path + '/dataset_searchindex.nmslib'))
 
+    # ==========================================================================================================
+    # TODO: Replace this secction with the appropriate query searches within the database to prevent needing
+    #       files for the future - Elliott Campbell
+    # ==========================================================================================================
 
+    # ==========================================================================================================
+    # Beginning
+    # ==========================================================================================================
     with open(os.path.join(THIS_FOLDER, docstring_data_path + '/generated_docstrings.docstring'), 'r') as f:
         generated_docstrings = f.readlines() #docstring data
 
     with open(os.path.join(THIS_FOLDER, function_data_path + '/all_functions_original_function.json'), 'r') as f:
         function_data_array = f.readlines() #function data
+    # ==========================================================================================================
+    # End
+    # ==========================================================================================================
 
     function_data = ''
     #combine the lines read in from the json

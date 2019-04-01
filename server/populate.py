@@ -1,3 +1,9 @@
+# ==============================================================
+# This file is mostly for accessing and populating that database
+# It should not be run for any other purpose. It's basically just
+# a scratch file.
+# ==============================================================
+
 from main import db, Score
 
 tests = [
@@ -20,6 +26,3 @@ def bar():
 ]
 
 
-for item in tests:
-    print(item)
-    db.session.add(item)
