@@ -22,14 +22,15 @@ class SearchEngine:
     """
     def __init__(self,
                  nmslib_index,
-                 docstring_data,
-                 function_data,
                  query2emb):
 
         self.search_index = nmslib_index
-        self.docstring_data = docstring_data
-        self.function_data = function_data
+
+
         self.query2emb = query2emb
+
+        # print(self.docstring_data[0])
+        # print(self.function_data[0])
 
     def search(self, str_search, k=3): #k is number of search results returned
         """
@@ -44,26 +45,11 @@ class SearchEngine:
         query = self.query2emb.emb_mean(str_search)
         idxs, dists = self.search_index.knnQuery(query, k=k)
 
-        results = {}
-        number = 1
-
-        for idx, dist in zip(idxs, dists):
-            results[number] = {
-                "keywords": self.docstring_data[idx],
-                "relevancy": "{:0.4f}".format(1 - dist),
-                "raw_code": self.function_data[idx]
-            }
-            # print('Input string:', str_search, '\nKeywords:', self.query2emb.get_keywords(str_search),
-            # '\nResult:', self.docstring_data[idx], f'cosine dist:{dist:.4f}\n','\nFunction: \n---------------\n',
-            # self.function_data[idx], '\n\n---------------\n')
-
-            number += 1
-
-        return results
+        return (idxs, dists)
 
 
 
-def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encoder):
+def load_se(datasetidx_path, lang_encoder):
     """
         Load the search engine. reads in docstring/function data, parses out original
         functions, and takes a language encoder object as input.
@@ -76,36 +62,7 @@ def load_se(datasetidx_path, docstring_data_path, function_data_path, lang_encod
 
     dataset_searchindex.loadIndex(os.path.join(THIS_FOLDER, datasetidx_path + '/dataset_searchindex.nmslib'))
 
-    # ==========================================================================================================
-    # TODO: Replace this secction with the appropriate query searches within the database to prevent needing
-    #       files for the future - Elliott Campbell
-    # ==========================================================================================================
-
-    # ==========================================================================================================
-    # Beginning
-    # ==========================================================================================================
-    with open(os.path.join(THIS_FOLDER, docstring_data_path + '/generated_docstrings.docstring'), 'r') as f:
-        generated_docstrings = f.readlines() #docstring data
-
-    with open(os.path.join(THIS_FOLDER, function_data_path + '/all_functions_original_function.json'), 'r') as f:
-        function_data_array = f.readlines() #function data
-    # ==========================================================================================================
-    # End
-    # ==========================================================================================================
-
-    function_data = ''
-    #combine the lines read in from the json
-    for line in function_data_array:
-        function_data = function_data + line
-
-    #replace escaped characters
-    function_data = function_data.replace('\\n','\n')
-    function_data = function_data.replace('\\t','\t')
-    function_data = function_data.replace('\\"','\"')
-    function_data = function_data.replace('\\/','/')
-    function_data = function_data.split('\",\"')
-
-    se = SearchEngine(nmslib_index = dataset_searchindex, docstring_data = generated_docstrings, function_data = function_data, query2emb = lang_encoder)
+    se = SearchEngine(nmslib_index = dataset_searchindex, query2emb = lang_encoder)
 
     return se
 

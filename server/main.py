@@ -9,8 +9,7 @@ Last Updated: March 31, 2019
 
 from flask_sqlalchemy import SQLAlchemy
 
-from flask import Flask
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 from flask_cors import CORS
 
@@ -48,20 +47,24 @@ engine = searchInit.searchEngineInit()
 class Score(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     raw_code = db.Column(db.Text, unique=True, nullable=False)
+
+     # Stored as bytestring for LargeBinary, so be sure to decode
     vector_coordinates = db.Column(db.LargeBinary)
-    docstring = db.Column(db.Text)
+
+    project_path = db.Column(db.Text)
     keywords = db.Column(db.Text)
 
     def to_dict(self):
         """
-        Returns a dictionary representation of the database model object
+        Returns a dictionary representation of the database model object.
+        NOTE: the coordinates are stored as byte string and needs to be decoded
+              using np.fromstring()
         """
 
         return {
             "id": self.id,
             "raw_code": self.raw_code,
-            "docstring": self.docstring,
-            "coordinates": self.vector_coordinates,
+            "coordinates": "coordinates",
             "keywords": self.keywords
         }
 
@@ -77,13 +80,18 @@ class Score(db.Model):
         """
         return "<Score {}>".format(self.id)
 
-
 # ==========================================================================================================
 # Enable CORS allos us to not have to worry about header information being correct/incorrect or having
 # a specfied IP address that is allowed to ping the server.
 # ==========================================================================================================
 CORS(app)
 
+
+@app.route("/")
+def send_index():
+    return render_template("score.html")
+
+    
 # ==========================================================================================================
 # Leftover from basic learning of the server. Can be removed, but doesn't bother anything at the moment.
 # ==========================================================================================================
@@ -130,17 +138,23 @@ def search():
     
     # ==========================================================================================================
     # Search for the relevant queries
+    # Should receive the ID/array location of the appropriate result and the distance/releveancy of the result
+    #   and the query.
     # ==========================================================================================================
-    results = engine.search(posted["search"])
+    idxs, dists = engine.search(posted["search"])
 
-    # queries = set()
-    # for word in keywords:
-    #     for query in Score.query.filter(Score.keywords.contains(word)).all():
-    #         queries.add(query)
+    results = {}
+    number = 1
+    for idx, dist in zip(idxs, dists):
+        query = Score.query.get(int(idx + 1))
+        results[number] = {
+            "keywords" : query.keywords,
+            "relevancy" : "{:0.4f}".format(1 - dist),
+            "raw_code" : query.raw_code
+        }
 
-    # results = {}
-    # for i in range(len(queries)):
-    #     results[str(i)] = queries.pop().to_dict()
+        number += 1
+
 
     return jsonify(results)
 

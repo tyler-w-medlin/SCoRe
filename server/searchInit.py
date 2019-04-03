@@ -8,7 +8,6 @@ def searchEngineInit():
 
     LANG_MODEL_PATH = 'tools/data/lang_model'
     LANG_MODEL_EMB_PATH = 'tools/data/lang_model_emb'
-    PROCESSED_DATA_PATH = 'tools/data/processed_data'
     # SEQ2SEQ_PATH = './data/seq2seq'
     # UNPROCESSED_DATA_PATH = './data/unprocessed_data'
 
@@ -16,4 +15,4 @@ def searchEngineInit():
     lang_encoder = load_encoder(LANG_MODEL_PATH, LANG_MODEL_PATH)
 
     #Step 7 load search engine
-    return load_se(LANG_MODEL_EMB_PATH, PROCESSED_DATA_PATH, PROCESSED_DATA_PATH, lang_encoder)
+    return load_se(LANG_MODEL_EMB_PATH, lang_encoder)
