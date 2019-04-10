@@ -3,7 +3,7 @@ var path = 'http://localhost:5000/';
 function sendCode(){
     var XHR = new XMLHttpRequest({mozSystem: true});
     var textBox = { "code" : document.getElementById("rawcode").value };
-    //var fileInput = document.getElementById("selectfile").files[0];
+    var fileInput = document.getElementById("selectfile").files[0];
     var docString = document.getElementById("docstring").value;
     let raw_code = new Object();
     var formData = new FormData();
@@ -18,16 +18,15 @@ function sendCode(){
     } else if (textBox.code !== "") {
         raw_code = textBox;
         console.log(raw_code);
+    } else if (fileInput.files !== null) {
+    
+        const reader = new FileReader()
+        reader.readAsText(fileInput);
+        reader.onload = ()=>{
+            formData.append(fileInput, fileInput.name);
+        }
+        // formData.append("code", new File(fileInput));
     }
-    // } else if (fileInput.files !== null) {
-        
-    //     const reader = new FileReader()
-    //     reader.readAsText(fileInput);
-    //     reader.onload = ()=>{
-    //         formData.append("code", new fileInput(reader.result, fileInput));
-    //     }
-    //     // formData.append("code", new File(fileInput));
-    // }
 
     XHR.addEventListener('load', (event)=> {
         console.log("Code sent and response loaded");
@@ -48,8 +47,8 @@ function sendCode(){
     //XHR.setRequestHeader('Content-Type', 'multipart/form-data');
     XHR.setRequestHeader('Content-Type', 'application/json');
 
-    XHR.send(JSON.stringify(raw_code));
-    //XHR.send(formData);
+    // XHR.send(JSON.stringify(raw_code));
+    XHR.send(fileInput);
 
     //results.addEventListener("")
 }

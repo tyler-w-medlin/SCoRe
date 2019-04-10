@@ -16,6 +16,8 @@ from flask_cors import CORS
 import json
 import os
 import sys
+from io import BytesIO
+from PIL import Image
 sys.path.append('./tools')
 sys.path.append('../data/lang_model')
 
@@ -160,15 +162,17 @@ def search():
 
 @app.route("/addCode", methods = ["POST"])
 def add():
-    if (request.form):
-        # print("Posted file: {}".format(request.files['file']))
-        posted = request.form
-        other = request.file
-    else:
+    try:
         posted = json.loads(request.data.decode())
-        other = "none"
+        if posted["docstring"]:
+            things_to_add = engine.prep_code(posted["code"], posted["docstring"], )
+        else:
+            things_to_add = engine.prep_code(posted["code"])
+    except json.decoder.JSONDecodeError:
+        data = BytesIO(request.data)
+        things_to_add = engine.prep_code(data.getvalue().decode(), file=True)
 
-    print(posted, other)
+    print(things_to_add)
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 

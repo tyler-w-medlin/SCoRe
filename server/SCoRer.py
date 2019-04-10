@@ -67,6 +67,7 @@ class SCoRer(object):
 
             #temporary way of loading a blob of code until file io is up
             raw_data_dict_list = self.prepro(args[0])
+            print(raw_data_dict_list)
             for dict in raw_data_dict_list:
                 #generate docstring if the function doesn't have one
                 if dict["docstring"] == '':
@@ -105,6 +106,7 @@ class SCoRer(object):
         Input: string containing python file
         Return: list of code snippet dictionaries { "raw_code":, "docstring":}
         """
+        
         data_dict_list = []
         pairs = self.get_function_docstring_pairs(blob)
         for pair in pairs:
@@ -115,7 +117,7 @@ class SCoRer(object):
                 "raw_code": str(pair[3]),
                 "docstring": str(pair[4])
                 })
-
+   
         return data_dict_list
 
     def get_function_docstring_pairs(self, blob):
