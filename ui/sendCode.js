@@ -1,4 +1,4 @@
-var path = 'http://10.13.1.207:5000/addCode';
+var path = 'http://localhost:5000/addCode';
 
 function sendCode(){
     var XHR = new XMLHttpRequest({mozSystem: true});
