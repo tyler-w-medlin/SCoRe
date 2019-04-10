@@ -12,6 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request, render_template
 
 from flask_cors import CORS
+import numpy as np
 
 import json
 import os
@@ -32,15 +33,9 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # ==========================================================================================================
 
 # print("sqlite:////" + os.path.join(basedir, "database", "sources.db"))
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", "score.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", "score.1.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
-
-# ==========================================================================================================
-# Initialize Search engine - Elliott Campbell
-# ==========================================================================================================
-
-engine = searchInit.searchEngineInit()
 
 
 # ==========================================================================================================
@@ -88,7 +83,35 @@ class Score(db.Model):
 # ==========================================================================================================
 CORS(app)
 
+def add_to_database(info):
+    item = Score(
+        raw_code = info["code_snippet"],
+        vector_coordinates = info["vectorization"],
+        project_path = None,
+        keywords = info["docstring"]
+    )
 
+    db.session.add(item)
+    db.session.flush()
+
+    print(item.id)
+    print(engine.search_index.addDataPoint(item.id, info["vectorization"]))
+    db.session.commit()
+
+def update():
+    for item in Score.query.all():
+        engine.search_index.addDataPoint(item.id - 1, np.fromstring(item.vector_coordinates))
+
+# ==========================================================================================================
+# Initialize Search engine - Elliott Campbell
+# ==========================================================================================================
+
+engine = searchInit.searchEngineInit()
+update()
+
+# ==========================================================================================================
+# Server route/function definitions
+# ==========================================================================================================
 @app.route("/")
 def send_index():
     return render_template("score.html")
@@ -148,7 +171,9 @@ def search():
     results = {}
     number = 1
     for idx, dist in zip(idxs, dists):
+
         query = Score.query.get(int(idx + 1))
+
         results[number] = {
             "keywords" : query.keywords,
             "relevancy" : "{:0.4f}".format(1 - dist),
@@ -164,15 +189,19 @@ def search():
 def add():
     try:
         posted = json.loads(request.data.decode())
-        if posted["docstring"]:
-            things_to_add = engine.prep_code(posted["code"], posted["docstring"], )
+
+        if "docstring" in posted:
+            things_to_add = engine.prep_code(posted["code"], posted["docstring"])
         else:
             things_to_add = engine.prep_code(posted["code"])
+
     except json.decoder.JSONDecodeError:
         data = BytesIO(request.data)
         things_to_add = engine.prep_code(data.getvalue().decode(), file=True)
 
-    print(things_to_add)
+    for info in things_to_add:
+        add_to_database(info)
+    engine.search_index.createIndex()
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
 

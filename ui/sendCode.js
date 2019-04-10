@@ -8,47 +8,44 @@ function sendCode(){
     let raw_code = new Object();
     var formData = new FormData();
 
-    console.log(textBox.code);
-    console.log(docString);
-    console.log(fileInput);
-    if (textBox.code !== "" && docString !== ""){
-        raw_code["code"] = textBox.code;
-        raw_code["docstring"] = docString;
-        console.log(raw_code);
-    } else if (textBox.code !== "") {
-        raw_code = textBox;
-        console.log(raw_code);
-    } else if (fileInput.files !== null) {
-    
-        const reader = new FileReader()
-        reader.readAsText(fileInput);
-        reader.onload = ()=>{
-            formData.append(fileInput, fileInput.name);
-        }
-        // formData.append("code", new File(fileInput));
-    }
-
-    XHR.addEventListener('load', (event)=> {
+    XHR.addEventListener('load', (event) => {
         console.log("Code sent and response loaded");
     });
 
-    XHR.addEventListener('error', (event)=> {
+    XHR.addEventListener('error', (event) => {
         alert('Code not sent. Something went wrong.')
     })
 
-    XHR.onreadystatechange = ()=> {
-        if(XHR.readyState == 4){
+    XHR.onreadystatechange = () => {
+        if (XHR.readyState == 4) {
             console.log('Code submitted successfully.');
         }
     }
-
+    
     XHR.open('POST', path + "addCode");
 
-    //XHR.setRequestHeader('Content-Type', 'multipart/form-data');
-    XHR.setRequestHeader('Content-Type', 'application/json');
+    if (textBox.code !== "" && docString !== ""){
+        XHR.setRequestHeader('Content-Type', 'application/json');
+        raw_code["code"] = textBox.code;
+        raw_code["docstring"] = docString;
+        
+        XHR.send(JSON.stringify(raw_code));
 
-    // XHR.send(JSON.stringify(raw_code));
-    XHR.send(fileInput);
+    } else if (textBox.code !== "") {
+        XHR.setRequestHeader('Content-Type', 'application/json');
+        raw_code = textBox;
+        XHR.send(JSON.stringify(raw_code));
+
+    } else if (fileInput.files !== null) {
+        XHR.send(fileInput);
+    }
+
+    
+
+
+    //XHR.setRequestHeader('Content-Type', 'multipart/form-data');
+
+    // 
 
     //results.addEventListener("")
 }

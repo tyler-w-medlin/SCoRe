@@ -17,7 +17,6 @@ def searchEngineInit():
     lang_encoder = load_encoder(LANG_MODEL_PATH, LANG_MODEL_PATH)
     code_summarizer, graph = load_summarizer(SEQ2SEQ_PATH, SEQ2SEQ_PATH)
     dataset_searchindex = nmslib.init(method='hnsw', space='cosinesimil')
-    dataset_searchindex.loadIndex('./dataset_searchindex.nmslib')
 
     #Step 7 load search engine
     return SCoRer(code_summarizer, lang_encoder, dataset_searchindex, graph)

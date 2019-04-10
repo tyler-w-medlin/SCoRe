@@ -60,7 +60,7 @@ class SCoRer(object):
                     "docstring": docstring,
                     "vectorization": vectorization
                     }
-                return data_dict
+                return [data_dict]
 
             elif len(args) == 1 and isinstance(args[0], str) and file == True:
                 #CASE file is uploaded
@@ -72,7 +72,7 @@ class SCoRer(object):
 
                 #temporary way of loading a blob of code until file io is up
                 raw_data_dict_list = self.prepro(args[0])
-                print(raw_data_dict_list)
+                
                 for dict in raw_data_dict_list:
                     #generate docstring if the function doesn't have one
                     if dict["docstring"] == '':
@@ -100,7 +100,7 @@ class SCoRer(object):
                     "vectorization": vectorization
                     }
 
-                return data_dict
+                return [data_dict]
 
             else:
                 print("\nInvalid args to prep_code() args = ", args)
