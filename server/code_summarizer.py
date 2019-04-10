@@ -36,11 +36,13 @@ def load_summarizer(seq2seq_model_path, text_processor_path):
     # Load decoder (docstrings/comments) pre-processor
     num_decoder_tokens, dec_pp = load_text_processor(text_processor_path + '/py_comment_proc_v2.dpkl')
 
+    graph = tf.get_default_graph()
+
     seq2seq_inf = Seq2Seq_Inference(encoder_preprocessor=enc_pp,
                                      decoder_preprocessor=dec_pp,
                                      seq2seq_model=seq2seq_Model)
 
-    return seq2seq_inf
+    return seq2seq_inf, graph
 
 def summarize_function(seq2seq_inf, input_code):
     """

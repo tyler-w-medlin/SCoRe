@@ -1,5 +1,6 @@
 import ast
 import astor
+from keras.backend import clear_session
 #these import locations will likely change
 from code_summarizer import summarize_function
 from language_encoder import encode
@@ -8,11 +9,13 @@ class SCoRer(object):
     def __init__(self,
                  code_summarizer,
                  lang_encoder,
-                 search_index):
+                 search_index,
+                 graph):
 
         self.code_summarizer = code_summarizer
         self.lang_encoder = lang_encoder
         self.search_index = search_index
+        self.graph = graph
 
     def search(self, str_search, k=3):  # k is number of search results returned
         """
@@ -46,58 +49,61 @@ class SCoRer(object):
                 Case 3 - code snippet dictionary { "code_snippet":, "docstring":, "vectorization":}
                 Case 4 - None
         """
-        if len(args) == 1 and isinstance(args[0], str) and file == False:
-            #CASE code snippet, no docstring
-            emb, docstring = self.code_summarizer.predict(args[0])
-            vectorization = self.lang_encoder.emb_mean(docstring)
-            data_dict =	{
-                "code_snippet": args[0],
-                "docstring": docstring,
-                "vectorization": vectorization
-                }
-            return data_dict
 
-        elif len(args) == 1 and isinstance(args[0], str) and file == True:
-            #CASE file is uploaded
-            data_dict_list = []
-
-            #unpack file
-            #blob = args[0].unpack()
-            #raw_data_dict_list = prepro(blob[0]) #unpack returns a single element tuple so an index is required
-
-            #temporary way of loading a blob of code until file io is up
-            raw_data_dict_list = self.prepro(args[0])
-            print(raw_data_dict_list)
-            for dict in raw_data_dict_list:
-                #generate docstring if the function doesn't have one
-                if dict["docstring"] == '':
-                    emb, dict["docstring"] = self.code_summarizer.predict(dict["raw_code"])
-                #vectorize docstring
-                vectorization = self.lang_encoder.emb_mean(dict["docstring"])
-                #append the new dict to the list of dictionaries
-                data_dict_list.append({
-                    "code_snippet": dict["raw_code"],
-                    "docstring": dict["docstring"],
+        with self.graph.as_default():
+            if len(args) == 1 and isinstance(args[0], str) and file == False:
+                #CASE code snippet, no docstring
+                emb, docstring = self.code_summarizer.predict(args[0])
+                vectorization = self.lang_encoder.emb_mean(docstring)
+                data_dict =	{
+                    "code_snippet": args[0],
+                    "docstring": docstring,
                     "vectorization": vectorization
-                    })
+                    }
+                return data_dict
 
-            return data_dict_list
+            elif len(args) == 1 and isinstance(args[0], str) and file == True:
+                #CASE file is uploaded
+                data_dict_list = []
 
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            #CASE code snippet and string
-            #vectorize docstring
-            vectorization = self.lang_encoder.emb_mean(args[1])
+                #unpack file
+                #blob = args[0].unpack()
+                #raw_data_dict_list = prepro(blob[0]) #unpack returns a single element tuple so an index is required
 
-            data_dict =	{
-                "code_snippet": args[0],
-                "docstring": args[1],
-                "vectorization": vectorization
-                }
+                #temporary way of loading a blob of code until file io is up
+                raw_data_dict_list = self.prepro(args[0])
+                print(raw_data_dict_list)
+                for dict in raw_data_dict_list:
+                    #generate docstring if the function doesn't have one
+                    if dict["docstring"] == '':
+                        #emb, dict["docstring"] = self.code_summarizer.predict(dict["raw_code"])
+                        dict["docstring"] = summarize_function(self.code_summarizer, dict["raw_code"])
+                    #vectorize docstring
+                    vectorization = self.lang_encoder.emb_mean(dict["docstring"])
+                    #append the new dict to the list of dictionaries
+                    data_dict_list.append({
+                        "code_snippet": dict["raw_code"],
+                        "docstring": dict["docstring"],
+                        "vectorization": vectorization
+                        })
 
-            return data_dict
+                return data_dict_list
 
-        else:
-            print("\nInvalid args to prep_code() args = ", args)
+            elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
+                #CASE code snippet and string
+                #vectorize docstring
+                vectorization = self.lang_encoder.emb_mean(args[1])
+
+                data_dict =	{
+                    "code_snippet": args[0],
+                    "docstring": args[1],
+                    "vectorization": vectorization
+                    }
+
+                return data_dict
+
+            else:
+                print("\nInvalid args to prep_code() args = ", args)
 
     def prepro(self, blob):
         """
@@ -106,7 +112,7 @@ class SCoRer(object):
         Input: string containing python file
         Return: list of code snippet dictionaries { "raw_code":, "docstring":}
         """
-        
+
         data_dict_list = []
         pairs = self.get_function_docstring_pairs(blob)
         for pair in pairs:
@@ -117,7 +123,7 @@ class SCoRer(object):
                 "raw_code": str(pair[3]),
                 "docstring": str(pair[4])
                 })
-   
+
         return data_dict_list
 
     def get_function_docstring_pairs(self, blob):
