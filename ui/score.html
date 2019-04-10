@@ -12,21 +12,44 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 
     <link rel="stylesheet" href="score.css">
-    <script src="score.js"></script>
+    <script src="sendData.js"></script>
+    <script src="changeView.js"></script>
+    <script src="clickButton.js"></script>
+    <script src="sendCode.js"></script>
+
 </head>
 
 <body>
-    <div class="container-fluid">
-        <div class = "container">
+    <div class="container">
+        <div class="container-fluid">
             <h1>SCoRe - Source Code Recommendation</h1>
         </div>
-        <div class="container form-group" id="submissionform">
-            <input type="text" class="col-12 form-control" name="search" id="searchbar" placeholder="Search...">
-            <button type="button" class="btn btn-primary col-4" id="searchbtn" onclick="sendData()">Search</button>
+        <div class="container-fluid form-group" id="searchcode">
+            <div class="container-fluid" id="submissionform">
+                <input type="text" class="col-12 form-control" name="search" id="searchbar" placeholder="Search...">
+                <button type="button" class="btn btn-primary col-4 mainbtn" id="searchbtn">Search</button>
+                <button type="button" class="btn btn-secondary col-4 mainbtn" id="viewbtn">Submit Your Own Code</button>
+            </div>
+            <div class="container-fluid">
+                <label for="results">Results</label>
+                <textarea class="form-control" rows="30" id="results" readonly></textarea>
+            </div>
         </div>
-        <div class="container">
-            <label for="results">Results</label>
-            <textarea class="form-control" rows="30" id="results" readonly></textarea>
+        <div class="container-fluid hidden" id="submitcode">
+            <div class="container-fluid">
+                <button type="button" class="btn btn-secondary col-4" id="backbtn" onclick>Back to Search</button>
+            </div>
+            <div class="container-fluid form-group" id="codeform">
+                <label for="rawcode">Raw Code</label>
+                <textarea class="form-control" rows="15" id="rawcode" placeholder="Paste raw code here..."></textarea>
+                <label for="docstring">Docstring</label>
+                <input class="form-control" placeholder="Paste docstring here..." id="docstring">
+                <div class="container-fluid col-sm-6">
+                    <label for="selectfile">Or, select a file</label>
+                    <input type="file" class="form-control-file" id="selectfile"/>
+                </div>
+                <button type="button" class="btn btn-primary mainbtn" id="sendcode">Submit</button>
+            </div>
         </div>
     </div>
 </body>
