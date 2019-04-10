@@ -61,7 +61,7 @@ function sendData(){
 
     //console.log(data);
 
-    XHR.open('POST', 'http://localhost:5000/search');
+    XHR.open('POST', path + "search");
 
     XHR.setRequestHeader('Content-Type', 'application/json');
 

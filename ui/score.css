@@ -9,10 +9,14 @@ input[type=text]:focus {
     width: 100%;
 }
 
-#results {
+textarea {
     overflow-y: scroll;
 }
 
-#searchbtn {
+.mainbtn, #rccontainer, label {
     margin-top: 15px;
+}
+
+#viewbtn {
+    text-align: right;
 }
