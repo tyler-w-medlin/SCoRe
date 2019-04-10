@@ -158,9 +158,23 @@ def search():
 
     return jsonify(results)
 
+@app.route("/addCode", methods = ["POST"])
+def add():
+    if (request.form):
+        # print("Posted file: {}".format(request.files['file']))
+        posted = request.form
+        other = request.file
+    else:
+        posted = json.loads(request.data.decode())
+        other = "none"
+
+    print(posted, other)
+
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
 
 # ==========================================================================================================
 # Run the server on the appropriate 0.0.0.0 IP address
 # ==========================================================================================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", debug=False)
