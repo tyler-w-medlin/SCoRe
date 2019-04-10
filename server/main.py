@@ -101,6 +101,7 @@ def add_to_database(info):
 def update():
     for item in Score.query.all():
         engine.search_index.addDataPoint(item.id - 1, np.fromstring(item.vector_coordinates))
+    engine.search_index.createIndex()
 
 # ==========================================================================================================
 # Initialize Search engine - Elliott Campbell
