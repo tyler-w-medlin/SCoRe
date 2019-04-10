@@ -1,4 +1,4 @@
-var path = 'http://localhost:5000/addCode';
+var path = 'http://localhost:5000/';
 
 function sendCode(){
     var XHR = new XMLHttpRequest({mozSystem: true});
@@ -43,7 +43,7 @@ function sendCode(){
         }
     }
 
-    XHR.open('POST', path);
+    XHR.open('POST', path + "addCode");
 
     //XHR.setRequestHeader('Content-Type', 'multipart/form-data');
     XHR.setRequestHeader('Content-Type', 'application/json');
