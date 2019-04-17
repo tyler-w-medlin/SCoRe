@@ -28,6 +28,8 @@ GUI Search
 - `libxext6`
 - `libxrender1`
 - `libfontconfig1`
+- `python-dev`
+- `python3-distutils`
 - All required python packages can be installed using the setup.py script
 - `gcc`
 
@@ -35,7 +37,7 @@ GUI Search
 ### Linux & macOS
 
 1. Ensure `python3.6` is installed on the system along with its corresponding `pip` module
-2. Change directories into the main directory (e.g. `SC0Re/`)
+2. Change directories into the main directory (e.g. `SCoRe/`)
 3. Run `setup.py` (`python3 setup.py`, this might have to be run using `sudo`)
 4. Ensure the above dataset items are downloaded and place them into `Score/server/tools/data/`
 5. Change directories to `SCoRe/server/`
@@ -48,6 +50,8 @@ GUI Search
     - This was tested on the Ubuntu distribution
 2. Follow the above steps for Linux environment.
 
+***The tutorial to download the Ubuntu Linux subsystem can be found on the microsoft documentation of how to install a linux subsystem. Here is a link to that tutorial: https://docs.microsoft.com/en-us/windows/wsl/install-win10***
+
 ### ERRORs
 
 If any errors occur during installation (`setup.py`), the following packages may need to be installed:
@@ -57,7 +61,9 @@ If any errors occur during installation (`setup.py`), the following packages may
 - `libxext6`
 - `libxrender1`
 - `libfontconfig1`
+- `python-dev`
+- `python3-distutils`
 
 #### Linux & Subsystem for Windows
 
-`sudo apt install python3-dev libsm6 libxext6 libxrender1 libfontconfig1`
+`sudo apt install python3-dev libsm6 libxext6 libxrender1 libfontconfig1 python-dev python3-distutils`
