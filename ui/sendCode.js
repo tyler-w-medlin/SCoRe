@@ -1,4 +1,5 @@
-var path = 'http://localhost:5000/';
+var path = 'http://10.13.1.207:5000/';
+//var path = 'http://localhost:5000/';
 
 function sendCode(){
     var XHR = new XMLHttpRequest({mozSystem: true});
@@ -10,18 +11,18 @@ function sendCode(){
     var formData = new FormData();
 
     XHR.addEventListener('load', (event) => {
-        console.log("Code sent and response loaded");
+        console.log("Done");
     });
 
     XHR.addEventListener('error', (event) => {
-        alert('Code not sent. Something went wrong.')
+        alert('Code not sent. Something went wrong.' + ' Error Code: ' + XHR.status)
         if (!confirmation.classList.contains("hidden")) {
             confirmation.classList.add("hidden");
         }
     })
 
     XHR.onreadystatechange = () => {
-        if (XHR.readyState == 4) {
+        if (XHR.readyState == 4 && XHR.status == 200) {
             console.log('Code submitted successfully.');
             if (confirmation.classList.contains("hidden")) {
                 confirmation.classList.remove("hidden");
