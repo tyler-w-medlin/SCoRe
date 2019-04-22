@@ -5,6 +5,7 @@ function sendCode(){
     var textBox = { "code" : document.getElementById("rawcode").value };
     var fileInput = document.getElementById("selectfile").files[0];
     var docString = document.getElementById("docstring").value;
+    var confirmation = document.getElementById("confirmation");
     let raw_code = new Object();
     var formData = new FormData();
 
@@ -14,11 +15,20 @@ function sendCode(){
 
     XHR.addEventListener('error', (event) => {
         alert('Code not sent. Something went wrong.')
+        if (!confirmation.classList.contains("hidden")) {
+            confirmation.classList.add("hidden");
+        }
     })
 
     XHR.onreadystatechange = () => {
         if (XHR.readyState == 4) {
             console.log('Code submitted successfully.');
+            if (confirmation.classList.contains("hidden")) {
+                confirmation.classList.remove("hidden");
+                document.getElementById("docstring").value = "";
+                document.getElementById("rawcode").value = "";
+                document.getElementById("selectfile").value = "";
+            }
         }
     }
     
