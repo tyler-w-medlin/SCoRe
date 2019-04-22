@@ -97,7 +97,7 @@ def add_to_database(info):
 
     db.session.add(item)
     db.session.flush()
-    engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0])
+    engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0].astype(np.float64))
     db.session.commit()
 
 def update():
