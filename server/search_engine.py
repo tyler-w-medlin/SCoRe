@@ -32,7 +32,7 @@ class SearchEngine:
         # print(self.docstring_data[0])
         # print(self.function_data[0])
 
-    def search(self, str_search, k=3): #k is number of search results returned
+    def search(self, str_search, k=3): #k is number of search results returned  
         """
             searches database using input search string. Returns top 3 most
             relevant results and their corresponding keywords, and the cosine

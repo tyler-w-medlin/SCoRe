@@ -2,6 +2,7 @@ import ast
 import astor
 from keras.backend import clear_session
 #these import locations will likely change
+import numpy as np
 from code_summarizer import summarize_function
 from language_encoder import encode
 
@@ -27,7 +28,7 @@ class SCoRer(object):
             Return:
             Output: Prints search string, keywords, result docstring, cosine distance between them
         """
-        query = self.lang_encoder.emb_mean(str_search)
+        query = self.lang_encoder.emb_mean(self.lang_encoder.get_keywords(str_search)).astype(np.float64)
         idxs, dists = self.search_index.knnQuery(query, k=k)
 
         return (idxs, dists)

@@ -77,6 +77,9 @@ class Score(db.Model):
         """
         return "<Score {}>".format(self.id)
 
+
+
+
 # ==========================================================================================================
 # Enable CORS allos us to not have to worry about header information being correct/incorrect or having
 # a specfied IP address that is allowed to ping the server.
@@ -86,21 +89,33 @@ CORS(app)
 def add_to_database(info):
     item = Score(
         raw_code = info["code_snippet"],
-        vector_coordinates = info["vectorization"],
+        vector_coordinates = info["vectorization"][0].astype(np.float64).tostring(),
         project_path = None,
         keywords = info["docstring"]
     )
 
+
     db.session.add(item)
     db.session.flush()
-
-    engine.search_index.addDataPoint(item.id - 1, info["vectorization"])
+    engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0])
     db.session.commit()
 
 def update():
     for item in Score.query.all():
+#         print("""
+#     id: {},
+#     coords: {},
+# """.format(item.id, np.fromstring(item.vector_coordinates)))
+        # print(item.vector_coordinates)
         engine.search_index.addDataPoint(item.id - 1, np.fromstring(item.vector_coordinates))
+    # print(np.fromstring(Score.query.get(159).vector_coordinates))
+    # print(Score.query.get(158))
     engine.search_index.createIndex()
+
+# =========================================================================================================
+
+
+
 
 # ==========================================================================================================
 # Initialize Search engine - Elliott Campbell
@@ -108,14 +123,6 @@ def update():
 
 engine = searchInit.searchEngineInit()
 update()
-
-# ==========================================================================================================
-# Server route/function definitions
-# ==========================================================================================================
-@app.route("/")
-def send_index():
-    return render_template("score.html")
-
     
 # ==========================================================================================================
 # Leftover from basic learning of the server. Can be removed, but doesn't bother anything at the moment.
@@ -187,6 +194,10 @@ def search():
 
 @app.route("/addCode", methods = ["POST"])
 def add():
+    """
+    TODO: Currently, the on the fly embeddings don't work well. They produce low space 0 vectors and creates
+          an issue when creating the database at initialization.
+    """
     try:
         posted = json.loads(request.data.decode())
 
@@ -204,6 +215,16 @@ def add():
     engine.search_index.createIndex()
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+
+
+# ==========================================================================================================
+# Server route/function definitions
+# ==========================================================================================================
+@app.route("/", defaults={"path": ''})
+@app.route("/<path:path>")
+def send_index(path):
+    return render_template("score.html")
+
 
 
 # ==========================================================================================================
