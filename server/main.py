@@ -30,13 +30,13 @@ import searchInit
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-
+db_name = "score.db"
 # ==========================================================================================================
 # Initialize Flask SQLAlchemy binders and database - Elliott Campbell
 # ==========================================================================================================
 
 # print("sqlite:////" + os.path.join(basedir, "database", "sources.db"))
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", "score.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", db_name)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
