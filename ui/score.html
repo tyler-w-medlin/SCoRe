@@ -46,9 +46,10 @@
                 <input class="form-control" placeholder="Paste docstring here..." id="docstring">
                 <div class="container-fluid col-sm-6">
                     <label for="selectfile">Or, select a file</label>
-                    <input type="file" class="form-control-file" id="selectfile"/>
+                    <input type="file" class="form-control-file" id="selectfile" accept=".py"/>
                 </div>
                 <button type="button" class="btn btn-primary mainbtn" id="sendcode">Submit</button>
+                <div class="inline hidden" id="confirmation">Code submitted successfully!</div>
             </div>
         </div>
     </div>

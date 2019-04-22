@@ -1,24 +1,35 @@
-var path = 'http://localhost:5000/';
+var path = 'http://10.13.1.207:5000/';
+//var path = 'http://localhost:5000/';
 
 function sendCode(){
     var XHR = new XMLHttpRequest({mozSystem: true});
     var textBox = { "code" : document.getElementById("rawcode").value };
     var fileInput = document.getElementById("selectfile").files[0];
     var docString = document.getElementById("docstring").value;
+    var confirmation = document.getElementById("confirmation");
     let raw_code = new Object();
     var formData = new FormData();
 
     XHR.addEventListener('load', (event) => {
-        console.log("Code sent and response loaded");
+        console.log("Done");
     });
 
     XHR.addEventListener('error', (event) => {
-        alert('Code not sent. Something went wrong.')
+        alert('Code not sent. Something went wrong.' + ' Error Code: ' + XHR.status)
+        if (!confirmation.classList.contains("hidden")) {
+            confirmation.classList.add("hidden");
+        }
     })
 
     XHR.onreadystatechange = () => {
-        if (XHR.readyState == 4) {
+        if (XHR.readyState == 4 && XHR.status == 200) {
             console.log('Code submitted successfully.');
+            if (confirmation.classList.contains("hidden")) {
+                confirmation.classList.remove("hidden");
+                document.getElementById("docstring").value = "";
+                document.getElementById("rawcode").value = "";
+                document.getElementById("selectfile").value = "";
+            }
         }
     }
     
