@@ -17,8 +17,11 @@ import numpy as np
 import json
 import os
 import sys
+
 from io import BytesIO
-from PIL import Image
+from zipfile import ZipFile
+import re
+
 sys.path.append('./tools')
 sys.path.append('../data/lang_model')
 
@@ -33,10 +36,12 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # ==========================================================================================================
 
 # print("sqlite:////" + os.path.join(basedir, "database", "sources.db"))
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", "score.1.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", "score.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
+
+check_extension = re.compile(".py$")
 
 # ==========================================================================================================
 # Database Table schema for our information and files
@@ -206,12 +211,24 @@ def add():
         else:
             things_to_add = engine.prep_code(posted["code"])
 
-    except json.decoder.JSONDecodeError:
-        data = BytesIO(request.data)
-        things_to_add = engine.prep_code(data.getvalue().decode(), file=True)
+    except:
+        try:
+            data = BytesIO(request.data).getvalue().decode()
+            things_to_add = engine.prep_code(data, file=True)
+            for info in things_to_add:
+                add_to_database(info)
+        except:
+            data = BytesIO(request.data)
+            with ZipFile(data) as zip:
+                files = [file for file in zip.filelist if check_extension.search(file.filename)]
 
-    for info in things_to_add:
-        add_to_database(info)
+                for file in files:
+                    with zip.open(file) as f:
+                        code = f.read().decode()
+                    things_to_add = engine.prep_code(code, file=True)
+                    for info in things_to_add:
+                        add_to_database(info)
+
     engine.search_index.createIndex()
 
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 

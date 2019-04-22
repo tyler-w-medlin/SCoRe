@@ -1,34 +1,18 @@
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <title>SCoRe - Source Code Recommendation</title>
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
-    <!-- jQuery library -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <meta charset="utf-8">
+  <title>Front</title>
+  <base href="/">
 
-    <!-- Latest compiled JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <link rel="stylesheet" href="{{url_for('static', filename='styles/score.css')}}">
-    <script type="text/javascript" src="{{url_for('static', filename='js/score.js')}}"></script>
-</head>
-
+<link rel="stylesheet" href="{{url_for('static', filename='styles/styles.a602893d6b9dcd67509d.css')}}"></head>
 <body>
-    <div class="container-fluid">
-        <div class = "container">
-            <h1>SCoRe - Source Code Recommendation</h1>
-        </div>
-        <div class="container form-group" id="submissionform">
-            <input type="text" class="col-12 form-control" name="search" id="searchbar" placeholder="Search...">
-            <button type="button" class="btn btn-primary col-4" id="searchbtn" onclick="sendData()">Search</button>
-        </div>
-        <div class="container">
-            <label for="results">Results</label>
-            <textarea class="form-control" rows="30" id="results" readonly></textarea>
-        </div>
-    </div>
-</body>
-
+  <app-root></app-root>
+<script type="text/javascript" src="{{url_for('static', filename='js/runtime.a5dd35324ddfd942bef1.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='js/es2015-polyfills.67c5cff8371af1f9a1d4.js')}}" nomodule></script>
+<script type="text/javascript" src="{{url_for('static', filename='js/polyfills.407a467dedb63cfdd103.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename='js/main.d8dcb64554c1ab297b30.js')}}"></script></body>
 </html>
