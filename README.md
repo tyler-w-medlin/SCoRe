@@ -30,8 +30,17 @@ GUI Search
 - `libfontconfig1`
 - `python-dev`
 - `python3-distutils`
-- All required python packages can be installed using the setup.py script
 - `gcc`
+- `g++`
+- All required python packages can be installed using the setup.py script
+- Replace the site-package for the Python `fastai` package with the files found in `SCoRe/server/tools/ai-reqs`
+    - TODO: Add this into setup.py and ensure the user is given the option of replacing it or not (warn them that the server will not rung without it)
+- Download the data models from the links above
+- nltk will need to download packages for itself
+    - `punkt`
+    - `stopwords`
+    - TODO: Add this into setup.py
+
 
 
 ### Linux & macOS
@@ -50,7 +59,7 @@ GUI Search
     - This was tested on the Ubuntu distribution
 2. Follow the above steps for Linux environment.
 
-***The tutorial to download the Ubuntu Linux subsystem can be found on the microsoft documentation of how to install a linux subsystem. Here is a link to that tutorial: https://docs.microsoft.com/en-us/windows/wsl/install-win10***
+***The tutorial to download the Ubuntu Linux subsystem can be found on the microsoft documentation website. Here is a link to that tutorial: https://docs.microsoft.com/en-us/windows/wsl/install-win10***
 
 ### ERRORs
 
@@ -63,7 +72,11 @@ If any errors occur during installation (`setup.py`), the following packages may
 - `libfontconfig1`
 - `python-dev`
 - `python3-distutils`
+- `g++`
+- `gcc`
 
-#### Linux & Subsystem for Windows
+#### Linux & Linux Subsystem for Windows
 
-`sudo apt install python3-dev libsm6 libxext6 libxrender1 libfontconfig1 python-dev python3-distutils`
+`sudo apt install python3-dev libsm6 libxext6 libxrender1 libfontconfig1 python-dev python3-distutils gcc g++`
+
+---
