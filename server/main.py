@@ -99,7 +99,6 @@ def add_to_database(info):
         keywords = info["docstring"]
     )
 
-
     db.session.add(item)
     db.session.flush()
     engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0].astype(np.float64))
@@ -210,7 +209,9 @@ def add():
             things_to_add = engine.prep_code(posted["code"], posted["docstring"])
         else:
             things_to_add = engine.prep_code(posted["code"])
-
+        
+        for info in things_to_add:
+            add_to_database(info)
     except:
         try:
             data = BytesIO(request.data).getvalue().decode()
