@@ -13,9 +13,6 @@ Dataset initialization:
 Command line search:
   1 - run SCoRe/data_init/command_line_search.py
   
-GUI Search
-  1 - start the server; run SCoRe/server/main.py
-  2 - open the GUI; open SCoRe/ui/score.html
 ---
 
 ## How to run
@@ -34,12 +31,10 @@ GUI Search
 - `g++`
 - All required python packages can be installed using the setup.py script
 - Replace the site-package for the Python `fastai` package with the files found in `SCoRe/server/tools/ai-reqs`
-    - TODO: Add this into setup.py and ensure the user is given the option of replacing it or not (warn them that the server will not rung without it)
 - Download the data models from the links above
 - nltk will need to download packages for itself
     - `punkt`
     - `stopwords`
-    - TODO: Add this into setup.py
 
 
 
@@ -47,7 +42,7 @@ GUI Search
 
 1. Ensure `python3.6` is installed on the system along with its corresponding `pip` module
 2. Change directories into the main directory (e.g. `SCoRe/`)
-3. Run `setup.py` (`python3 setup.py`, this might have to be run using `sudo`)
+3. Run `setup.py` (`python3.6 setup.py`, this might have to be run using `sudo`)
 4. Ensure the above dataset items are downloaded and place them into `Score/server/tools/data/`
 5. Change directories to `SCoRe/server/`
 6. Run the command `python3.6 main.py`
