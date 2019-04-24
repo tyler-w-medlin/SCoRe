@@ -57,8 +57,8 @@ def nltkDownloads():
         nltk.download(package)
 
 if __name__ == "__main__":
-    # spacyDownload()
-    # download("./requirements.txt")
+    spacyDownload()
+    download("./requirements.txt")
     print("All dependencies have succesfully installed.")
     print("=" * 25, "\n")
     replaceFastai()
