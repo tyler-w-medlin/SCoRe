@@ -1,28 +1,44 @@
 from keras.models import load_model
 from pathlib import Path
+import tensorflow as tf
+import os
+import warnings
+import sys
 import numpy as np
+import sys
+sys.path.append('../utils')
 from seq2seq_utils import load_text_processor
 
-code2emb_path = Path('./data/code2emb/')
-seq2seq_path = Path('./data/seq2seq/')
-data_path = Path('./data/processed_data/')
+def load_code2emb(code2emb_path, seq2seq_path):
+    """
+    Loads the code2emb module.
 
-code2emb_model = load_model(code2emb_path/'code2emb_model.hdf5')
-num_encoder_tokens, enc_pp = load_text_processor(seq2seq_path/'py_code_proc_v2.dpkl')
+    Input: Path to the model and preprocessor
 
-with open(data_path/'without_docstrings.function', 'r') as f:
-    no_docstring_funcs = f.readlines()
+    Returns: code2emb model and text preprocessor
 
-encinp = enc_pp.transform_parallel(no_docstring_funcs)
-np.save(code2emb_path / 'nodoc_encinp.npy', encinp)
+    """
+    tf.logging.set_verbosity('ERROR')
+    os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
+    warnings.filterwarnings("ignore")
 
-code2emb_path = Path('./data/code2emb/')
-encinp = np.load(code2emb_path/'nodoc_encinp.npy')
+    code2emb_model = load_model(code2emb_path)
+    num_encoder_tokens, enc_pp = load_text_processor(seq2seq_path)
 
-nodoc_vecs = code2emb_model.predict(encinp, batch_size=20000)
+    return code2emb_model, enc_pp
 
+def code2emb(code, code2emb_model, enc_pp):
+    """
+    Vectorizes code snippet.
 
-# make sure the number of output rows equal the number of input rows
-assert nodoc_vecs.shape[0] == encinp.shape[0]
+    Input: Code snippet, code2emb model, text preprocessor
 
-np.save(code2emb_path/'nodoc_vecs.npy', nodoc_vecs)
+    Returns: vectorization of input code snippet
+
+    """
+    lst = {code}
+    encinp = enc_pp.transform_parallel(lst)
+
+    vectorization = code2emb_model.predict(encinp, batch_size=20000)
+
+    return vectorization

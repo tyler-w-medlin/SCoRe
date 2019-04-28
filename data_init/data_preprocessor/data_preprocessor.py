@@ -154,5 +154,9 @@ def process_data(raw_data_path, outfile_path):
 
     df.shape
 
+    with_docstrings = df[df.docstring_tokens.str.split().apply(listlen) >= 3]
+    without_docstrings = df[df.docstring_tokens.str.split().apply(listlen) < 3]
+
     print(f'All functions rows {df.shape[0]:,}')
-    write_to(df, 'all_functions', outfile_path)
+    write_to(with_docstrings, 'with_docstrings', outfile_path)
+    write_to(without_docstrings, 'without_docstrings', outfile_path)
