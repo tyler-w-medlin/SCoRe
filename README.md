@@ -40,7 +40,7 @@ Command line search:
 
 ### Linux & macOS
 
-1. Ensure `python3.6` is installed on the system along with its corresponding `pip` module
+1. Ensure `python3.6` is installed on the system along with its corresponding `pip` module (`get-pip.py` should be supplied in the repo).
 2. Change directories into the main directory (e.g. `SCoRe/`)
 3. Run `setup.py` (`python3.6 setup.py`, this might have to be run using `sudo`)
 4. Ensure the above dataset items are downloaded and place them into `Score/server/tools/data/`
