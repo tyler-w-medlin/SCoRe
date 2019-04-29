@@ -6,8 +6,10 @@ import warnings
 import sys
 import numpy as np
 import sys
+
 sys.path.append('../utils')
 from seq2seq_utils import load_text_processor
+
 
 def load_code2emb(code2emb_path, seq2seq_path):
     """
@@ -19,13 +21,14 @@ def load_code2emb(code2emb_path, seq2seq_path):
 
     """
     tf.logging.set_verbosity('ERROR')
-    os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
     warnings.filterwarnings("ignore")
 
     code2emb_model = load_model(code2emb_path)
     num_encoder_tokens, enc_pp = load_text_processor(seq2seq_path)
 
     return code2emb_model, enc_pp
+
 
 def code2emb(code, code2emb_model, enc_pp):
     """
