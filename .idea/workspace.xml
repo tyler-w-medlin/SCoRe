@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3bd79b21-b73a-454e-a2c0-54c7340b3161" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/SCoRe.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,8 +16,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="459">
-              <caret line="27" column="51" lean-forward="true" selection-start-line="27" selection-start-column="51" selection-end-line="27" selection-end-column="51" />
+            <state relative-caret-position="204">
+              <caret line="12" column="32" selection-start-line="12" selection-start-column="32" selection-end-line="12" selection-end-column="32" />
               <folding>
                 <element signature="e#0#35#0" expanded="true" />
               </folding>
@@ -32,7 +28,21 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_init/data_init.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-34" />
+            <state relative-caret-position="136">
+              <caret line="16" column="28" selection-start-line="16" selection-start-column="28" selection-end-line="16" selection-end-column="28" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data_init/code_summarizer/code_summarizer.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="238">
+              <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
+              <folding>
+                <element signature="e#0#14#0" expanded="true" />
+              </folding>
+            </state>
           </provider>
         </entry>
       </file>
@@ -50,7 +60,9 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/data_init/language_encoder/language_encoder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-102" />
+            <state relative-caret-position="289">
+              <caret line="17" column="15" selection-start-line="17" selection-start-column="15" selection-end-line="17" selection-end-column="15" />
+            </state>
           </provider>
         </entry>
       </file>
@@ -58,7 +70,7 @@
         <entry file="file://$PROJECT_DIR$/data_init/utils/seq2seq_utils.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="-1156">
-              <caret line="16" column="37" lean-forward="true" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
+              <caret line="16" column="37" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
               <folding>
                 <element signature="e#0#36#0" expanded="true" />
               </folding>
@@ -86,10 +98,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="693" />
-    <option name="y" value="-25" />
-    <option name="width" value="614" />
-    <option name="height" value="867" />
+    <option name="x" value="-9" />
+    <option name="y" value="-9" />
+    <option name="width" value="980" />
+    <option name="height" value="860" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -106,71 +118,7 @@
             <path>
               <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
               <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="code_summarizer" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="lang_model_emb" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="processed_data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="seq2seq" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="unprocessed_data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="data_preprocessor" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="L2-Language-Encoder" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="language_encoder" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="data_init" type="462c0819:PsiDirectoryNode" />
-              <item name="utils" type="462c0819:PsiDirectoryNode" />
+              <item name="documentation" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
@@ -188,51 +136,6 @@
               <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
               <item name="server" type="462c0819:PsiDirectoryNode" />
               <item name="language_encoder" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="lang_model" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="processed_data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="seq2seq" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="SCoRe" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SCoRe" type="462c0819:PsiDirectoryNode" />
-              <item name="server" type="462c0819:PsiDirectoryNode" />
-              <item name="tools" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="unprocessed_data" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -272,6 +175,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24973656" />
@@ -345,6 +249,43 @@
     </option>
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/data_init/utils/seq2seq_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1156">
+          <caret line="16" column="37" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
+          <folding>
+            <element signature="e#0#36#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_init/data_init.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="136">
+          <caret line="16" column="28" selection-start-line="16" selection-start-column="28" selection-end-line="16" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="204">
+          <caret line="12" column="32" selection-start-line="12" selection-start-column="32" selection-end-line="12" selection-end-column="32" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_init/code_summarizer/code_summarizer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="238">
+          <caret line="14" lean-forward="true" selection-start-line="14" selection-end-line="14" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/data_init/data_preprocessor/data_preprocessor.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1581">
@@ -354,34 +295,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data_init/utils/seq2seq_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1156">
-          <caret line="16" column="37" lean-forward="true" selection-start-line="16" selection-start-column="37" selection-end-line="16" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#36#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_init/L2-Language-Encoder/l2-language-encoder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="459">
-          <caret line="27" column="51" lean-forward="true" selection-start-line="27" selection-start-column="51" selection-end-line="27" selection-end-column="51" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_init/data_init.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-34" />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data_init/language_encoder/language_encoder.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-102" />
+        <state relative-caret-position="289">
+          <caret line="17" column="15" selection-start-line="17" selection-start-column="15" selection-end-line="17" selection-end-column="15" />
+        </state>
       </provider>
     </entry>
   </component>

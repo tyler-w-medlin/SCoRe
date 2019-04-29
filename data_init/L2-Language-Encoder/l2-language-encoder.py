@@ -1,7 +1,7 @@
 from keras.models import load_model
 from pathlib import Path
 import numpy as np
-from seq2seq_utils import load_text_processor
+from data_init.utils.seq2seq_utils import load_text_processor
 
 code2emb_path = Path('./data/code2emb/')
 seq2seq_path = Path('./data/seq2seq/')
@@ -14,10 +14,6 @@ with open(data_path/'without_docstrings.function', 'r') as f:
     no_docstring_funcs = f.readlines()
 
 encinp = enc_pp.transform_parallel(no_docstring_funcs)
-np.save(code2emb_path / 'nodoc_encinp.npy', encinp)
-
-code2emb_path = Path('./data/code2emb/')
-encinp = np.load(code2emb_path/'nodoc_encinp.npy')
 
 nodoc_vecs = code2emb_model.predict(encinp, batch_size=20000)
 
