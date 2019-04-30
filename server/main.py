@@ -30,7 +30,7 @@ import searchInit
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_name = "help.db"
+db_name = "score.db"
 # ==========================================================================================================
 # Initialize Flask SQLAlchemy binders and database - Elliott Campbell
 # ==========================================================================================================
