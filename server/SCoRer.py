@@ -49,6 +49,8 @@ class SCoRer(object):
                 Case 2 - list of code snippet dictionaries [{ "code_snippet":, "docstring":, "vectorization":}, ...]
                 Case 3 - code snippet dictionary { "code_snippet":, "docstring":, "vectorization":}
                 Case 4 - None
+
+        Author: Tyler Medlin
         """
 
         with self.graph.as_default():
@@ -67,17 +69,12 @@ class SCoRer(object):
                 #CASE file is uploaded
                 data_dict_list = []
 
-                #unpack file
-                #blob = args[0].unpack()
-                #raw_data_dict_list = prepro(blob[0]) #unpack returns a single element tuple so an index is required
-
                 #temporary way of loading a blob of code until file io is up
                 raw_data_dict_list = self.prepro(args[0])
-                
+
                 for dict in raw_data_dict_list:
                     #generate docstring if the function doesn't have one
                     if dict["docstring"] == '':
-                        #emb, dict["docstring"] = self.code_summarizer.predict(dict["raw_code"])
                         dict["docstring"] = summarize_function(self.code_summarizer, dict["raw_code"])
                     #vectorize docstring
                     vectorization = self.lang_encoder.emb_mean(dict["docstring"])
@@ -112,6 +109,8 @@ class SCoRer(object):
         and packages code snippet data in a list of dictionaries.
         Input: string containing python file
         Return: list of code snippet dictionaries { "raw_code":, "docstring":}
+
+        Author: Tyler Medlin
         """
 
         data_dict_list = []
@@ -132,6 +131,8 @@ class SCoRer(object):
         Extract (function/method, docstring) pairs from a given code blob.
         Input: string containing python file
         Return: function/docstring pairs
+
+        Author: Hamel Husain GitHub: hamelsmu/code_search
         """
         pairs = []
         try:
