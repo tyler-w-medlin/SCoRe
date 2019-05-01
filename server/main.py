@@ -94,15 +94,19 @@ class Score(db.Model):
 CORS(app)
 
 def add_to_database(info):
-    item = Score(
-        raw_code = info["code_snippet"],
-        vector_coordinates = info["vectorization"][0].astype(np.float64).tostring(),
-        project_path = None,
-        keywords = info["docstring"]
-    )
+    try:
+        item = Score(
+            raw_code = info["code_snippet"],
+            vector_coordinates = info["vectorization"][0].astype(np.float64).tostring(),
+            project_path = None,
+            keywords = info["docstring"]
+        )
 
-    db.session.add(item)
-    db.session.flush()
+    
+        db.session.add(item)
+        db.session.flush()
+    except:
+        return
     engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0].astype(np.float64))
     db.session.commit()
 
