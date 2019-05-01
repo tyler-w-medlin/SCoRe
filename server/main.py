@@ -30,7 +30,9 @@ import searchInit
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_name = "score.db"
+db_name = "example.db"
+print("Using database", db_name)
+
 # ==========================================================================================================
 # Initialize Flask SQLAlchemy binders and database - Elliott Campbell
 # ==========================================================================================================
@@ -92,15 +94,19 @@ class Score(db.Model):
 CORS(app)
 
 def add_to_database(info):
-    item = Score(
-        raw_code = info["code_snippet"],
-        vector_coordinates = info["vectorization"][0].astype(np.float64).tostring(),
-        project_path = None,
-        keywords = info["docstring"]
-    )
+    try:
+        item = Score(
+            raw_code = info["code_snippet"],
+            vector_coordinates = info["vectorization"][0].astype(np.float64).tostring(),
+            project_path = None,
+            keywords = info["docstring"]
+        )
 
-    db.session.add(item)
-    db.session.flush()
+    
+        db.session.add(item)
+        db.session.flush()
+    except:
+        return
     engine.search_index.addDataPoint(item.id - 1, info["vectorization"][0].astype(np.float64))
     db.session.commit()
 
@@ -205,7 +211,7 @@ def add():
     try:
         posted = json.loads(request.data.decode())
 
-        if "docstring" in posted:
+        if posted["docstring"] != "":
             things_to_add = engine.prep_code(posted["code"], posted["docstring"])
         else:
             things_to_add = engine.prep_code(posted["code"])
