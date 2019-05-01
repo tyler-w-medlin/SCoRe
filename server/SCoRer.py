@@ -57,8 +57,8 @@ class SCoRer(object):
             if len(args) == 1 and isinstance(args[0], str) and file == False:
                 #CASE code snippet, no docstring
                 emb, docstring = self.code_summarizer.predict(args[0])
-                # vectorization = self.levelTwo.code2emb(args[0])
-                vectorization = self.lang_encoder.emb_mean(docstring)
+                vectorization = self.levelTwo.code2emb(args[0])
+                # vectorization = self.lang_encoder.emb_mean(docstring)
                 data_dict =	{
                     "code_snippet": args[0],
                     "docstring": docstring,
@@ -82,8 +82,8 @@ class SCoRer(object):
                     if dict["docstring"] == '':
                         #emb, dict["docstring"] = self.code_summarizer.predict(dict["raw_code"])
                         dict["docstring"] = summarize_function(self.code_summarizer, dict["raw_code"])
-                        # vectorization = self.levelTwo.code2emb(dict["raw_code"])
-                        vectorization = self.lang_encoder.emb_mean(dict["docstring"])
+                        vectorization = self.levelTwo.code2emb(dict["raw_code"])
+                        # vectorization = self.lang_encoder.emb_mean(dict["docstring"])
                     else:
                     #vectorize docstring
                         vectorization = self.lang_encoder.emb_mean(dict["docstring"])

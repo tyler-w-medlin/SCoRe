@@ -30,7 +30,9 @@ import searchInit
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_name = "score.db"
+db_name = "example.db"
+print("Using database", db_name)
+
 # ==========================================================================================================
 # Initialize Flask SQLAlchemy binders and database - Elliott Campbell
 # ==========================================================================================================
@@ -205,7 +207,7 @@ def add():
     try:
         posted = json.loads(request.data.decode())
 
-        if "docstring" in posted:
+        if posted["docstring"] != "":
             things_to_add = engine.prep_code(posted["code"], posted["docstring"])
         else:
             things_to_add = engine.prep_code(posted["code"])
