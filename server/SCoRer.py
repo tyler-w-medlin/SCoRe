@@ -20,7 +20,7 @@ class SCoRer(object):
         self.graph = graph
         self.levelTwo = levelTwo
 
-    def search(self, str_search, k=3):  # k is number of search results returned
+    def search(self, str_search, k=25):  # k is number of search results returned
         """
             searches database using input search string. Returns top 3 most
             relevant results and their corresponding keywords, and the cosine

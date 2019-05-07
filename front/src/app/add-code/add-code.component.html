@@ -1,0 +1,29 @@
+<header>
+  <nav class="navigation">
+    <ul class="container">
+      <li class="title">
+        <h1><a [routerLink]="['/']" routerLinkActive="router-link-active"></a></h1>
+      </li>
+      <li class="add"><a [routerLink]="['/']"><button>Search code</button></a></li>
+    </ul>
+  </nav>
+</header>
+<div class="main">
+  <textarea #code class="code" placeholder="Place your code here"></textarea>
+  <textarea #docstring class="docstring" placeholder="Enter associated docstring here"></textarea>
+  <h2>Or upload a file</h2>
+  <div class="file">
+    <input #fileInput id="file-input" type="file" accept=".py,.zip"
+    (change)="disableText([code, docstring]);"/>
+  </div>
+  <div class="submit">
+    <button
+    (click)="
+    submitCode($event.target, {
+      'file': fileInput.files[0],
+      'code': code.value,
+      'docstring': docstring.value
+    });">
+      Submit</button>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+
+.results li {
+    list-style: none;
+    border: 2px solid #404040;
+    border-radius: 10px;
+    margin-top: 40px;
+    background: rgba(40,40,40, 0.5);
+    color: white;
+    width: 50%;
+    margin: 40px auto;
+}
+
+
+.snippet {
+    margin: 4vw;
+}
+
+.snippet pre {
+    border: 3px solid gray;
+    color: black;
+    background-color: white;
+    width: 30vw;
+    padding: 4vh 3vw 4vh 3vw;
+    margin: auto;
+    overflow-x: auto;
+}
+

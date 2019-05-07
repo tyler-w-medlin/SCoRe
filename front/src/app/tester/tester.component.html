@@ -1,0 +1,43 @@
+<header>
+  <nav class="navigation">
+    <ul class="container">
+      <li class="title">
+          <h1><a [routerLink]="['/']" routerLinkActive="router-link-active"></a></h1>
+      </li>
+      <li class="sort">
+        <select (change)="switchSort($event.target.value)">
+          <option value="relevancy">Relevancy</option>
+          <option value="keyword">Keyword</option>
+        </select>
+      </li>
+      <li class="search">
+        <input #searchBox id="search-box" autofocus (keyup.enter)="getResults(searchBox.value);" placeholder="Search"/></li>
+      <li class="add">
+        <button (click)="getResults(searchBox.value);">Submit</button>
+        <a [routerLink]="['./add']" ><button>Add code</button></a>
+      </li>
+    </ul>
+  </nav>
+</header>
+<div class="main">
+  <ul *ngIf="sort === 'relevancy'" class="results">
+    <li #snippets *ngFor="let result of results">
+      <div class="snippet">
+        <p><strong>Docstring</strong>: {{result.keywords}}</p>
+        <p><strong>Relevancy</strong>: %{{result.relevancy * 100 | number}}</p>
+        <p><strong>Raw Code</strong>:</p>
+        <pre><code >{{result.raw_code}}</code></pre>
+      </div>
+    </li>
+  </ul>
+  <ul *ngIf="sort !== 'relevancy'" class="results">
+    <li #snippets *ngFor="let result of keywordResults">
+      <div class="snippet">
+        <p><strong>Docstring</strong>: {{result.res.keywords}}</p>
+        <p><strong>Relevancy</strong>: %{{result.res.relevancy * 100 | number}}</p>
+        <p><strong>Raw Code</strong>:</p>
+        <pre><code >{{result.res.raw_code}}</code></pre>
+      </div>
+    </li>
+  </ul>
+</div>

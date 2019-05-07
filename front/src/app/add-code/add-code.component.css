@@ -1,0 +1,60 @@
+textarea {
+    margin: auto;
+    margin-bottom: 3vh;
+    display: block;
+    resize: None;
+    overflow: auto;
+    border: 2px solid black;
+}
+
+.main h2 {
+    text-align: center;
+    margin-top: 5vh;
+}
+
+.code {
+    width: 65vw;
+    height: 30vh;
+}
+
+.docstring {
+    width: 65vw;
+}
+
+.file {
+    margin: auto;
+    text-align: center;
+    margin-top: 5vh;
+}
+
+.submit {
+    margin: auto;
+    margin-top: 5vh;
+    text-align: center;
+}
+
+.submit button {
+
+    display: inline-block;
+    margin-left: 5vw;
+    margin-right: 5vw;
+    height: 40px;
+    background: none;
+    background-size: 100% 0%;
+    border: 2px solid white;
+    border-radius: 15px;
+    cursor: pointer;
+    width: 65vw;
+    height: 5vh;
+    font-size: 1.5em;
+    color: black;
+
+    transition: 1s ease;
+
+}
+
+.submit button:hover {
+    background: #ff6f69;
+}
+
+
