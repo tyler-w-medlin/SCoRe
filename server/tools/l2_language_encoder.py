@@ -1,3 +1,8 @@
+"""
+Code encoder - loads model, encodes input code
+
+Author: Billy Janson
+"""
 from keras.models import load_model
 from pathlib import Path
 import tensorflow as tf
@@ -48,11 +53,11 @@ class LevelTwo:
     def __init__(self, code2mb_model, enc_pp):
         self.enc_pp = enc_pp
         self.code2emb_model = code2mb_model
-    
+
     def code2emb(self, code):
         lst = {code}
         encinp = self.enc_pp.transform_parallel(lst)
 
         vectorization = self.code2emb_model.predict(encinp, batch_size=20000)
-    
+
         return vectorization

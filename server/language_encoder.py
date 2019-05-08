@@ -1,3 +1,9 @@
+"""
+Language encoder - loads the model, encodes input strings
+
+Author: Tristin Cory
+"""
+
 import sys
 sys.path.append('./')
 from tools.lang_model_utils import load_lm_vocab, Query2Emb, get_embeddings
@@ -44,30 +50,3 @@ def encode(lang_encoder, input_string):
 
     """
     return lang_encoder.emb_mean(input_string)
-
-
-def embed_dataset(lang_encoder, raw_docstrings_path, outfile_path):
-    """
-    Embeds the provided dataset and writes it to a file
-
-    Input: Query2Emb object, path to docstring dataset, path of output file
-
-    Returns: -----
-
-    Outputs: dataset embedding file
-
-    """
-    #load raw docstrings
-    loadpath = Path(raw_docstrings_path)
-    with open(loadpath/'generated_docstrings.docstring', 'r') as f:
-        docstrings_raw = f.readlines()
-
-    #transform docstring data
-    idx_doc = lang_encoder.vocab.transform(docstrings_raw, max_seq_len=30, padding=False)
-
-    #embed data
-    avg_hs, max_hs, last_hs = get_embeddings(lang_encoder.lang_model, idx_doc)
-
-    #save embeddings to output file
-    loadpath = Path(outfile_path)
-    np.save(loadpath/'dataset_embedding.npy', avg_hs)

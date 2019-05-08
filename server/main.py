@@ -30,14 +30,13 @@ import searchInit
 app = Flask(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_name = "example.db"
+db_name = "score_5_8_2019.db"
 print("Using database", db_name)
 
 # ==========================================================================================================
 # Initialize Flask SQLAlchemy binders and database - Elliott Campbell
 # ==========================================================================================================
 
-# print("sqlite:////" + os.path.join(basedir, "database", "sources.db"))
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////" + os.path.join(basedir, "database", db_name)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
@@ -102,7 +101,7 @@ def add_to_database(info):
             keywords = info["docstring"]
         )
 
-    
+
         db.session.add(item)
         db.session.flush()
     except:
@@ -112,14 +111,8 @@ def add_to_database(info):
 
 def update():
     for item in Score.query.all():
-#         print("""
-#     id: {},
-#     coords: {},
-# """.format(item.id, np.fromstring(item.vector_coordinates)))
-        # print(item.vector_coordinates)
         engine.search_index.addDataPoint(item.id - 1, np.fromstring(item.vector_coordinates))
-    # print(np.fromstring(Score.query.get(159).vector_coordinates))
-    # print(Score.query.get(158))
+
     engine.search_index.createIndex()
 
 # =========================================================================================================
@@ -133,7 +126,7 @@ def update():
 
 engine = searchInit.searchEngineInit()
 update()
-    
+
 # ==========================================================================================================
 # Leftover from basic learning of the server. Can be removed, but doesn't bother anything at the moment.
 # ==========================================================================================================
@@ -155,14 +148,14 @@ def search():
     A setup for the API route in order to receive a POST request in
     applicat/json form and return the search query in application/json
     as well.
-    
+
     @params: None
     @input: application/json in format:
                 {
                     "search" <search_terms/search_string>
                 }
     @output: application/json in format:
-                { 
+                {
                     N (where n is the result number):
                     {
                         "keywords": <keywords from query result>,
@@ -177,7 +170,7 @@ def search():
     # ==========================================================================================================
     posted = json.loads(request.data.decode())
 
-    
+
     # ==========================================================================================================
     # Search for the relevant queries
     # Should receive the ID/array location of the appropriate result and the distance/releveancy of the result
@@ -215,7 +208,7 @@ def add():
             things_to_add = engine.prep_code(posted["code"], posted["docstring"])
         else:
             things_to_add = engine.prep_code(posted["code"])
-        
+
         for info in things_to_add:
             add_to_database(info)
     except:
@@ -238,7 +231,7 @@ def add():
 
     engine.search_index.createIndex()
 
-    return json.dumps({'success':True}), 200, {'ContentType':'application/json'} 
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 
 # ==========================================================================================================

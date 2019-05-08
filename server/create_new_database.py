@@ -1,3 +1,9 @@
+"""
+Automation script for creating a new database
+
+Author: Elliott Campbell
+
+"""
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 import os
@@ -8,7 +14,7 @@ def ask_name():
 def create_file(file_name):
     with open("database/{}.db".format(file_name), "w") as f:
         pass
-    
+
 
 if __name__ == "__main__":
     file_name = ask_name()

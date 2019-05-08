@@ -1,7 +1,12 @@
+"""
+Search engine - processes new code and performs searches
+
+Authors: Tyler Medlin, Elliott Campbell
+
+"""
 import ast
 import astor
 from keras.backend import clear_session
-#these import locations will likely change
 import numpy as np
 from code_summarizer import summarize_function
 from tools.l2_language_encoder import code2emb
@@ -60,7 +65,6 @@ class SCoRer(object):
                 #CASE code snippet, no docstring
                 emb, docstring = self.code_summarizer.predict(args[0])
                 vectorization = self.levelTwo.code2emb(args[0])
-                # vectorization = self.lang_encoder.emb_mean(docstring)
                 data_dict =	{
                     "code_snippet": args[0],
                     "docstring": docstring,
@@ -80,7 +84,6 @@ class SCoRer(object):
                     if dict["docstring"] == '':
                         dict["docstring"] = summarize_function(self.code_summarizer, dict["raw_code"])
                         vectorization = self.levelTwo.code2emb(dict["raw_code"])
-                        # vectorization = self.lang_encoder.emb_mean(dict["docstring"])
                     else:
                     #vectorize docstring
                         vectorization = self.lang_encoder.emb_mean(dict["docstring"])

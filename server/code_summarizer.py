@@ -1,3 +1,9 @@
+"""
+Code summarizer - loads model, summarizes input code
+
+Author: Tyler Medlin
+"""
+
 import logging
 from pathlib import Path
 from keras.models import Model, load_model
@@ -59,30 +65,3 @@ def summarize_function(seq2seq_inf, input_code):
     """
     emb, gen_docstring = seq2seq_inf.predict(input_code)
     return gen_docstring
-
-def summarize_dataset(code_summarizer, all_functions_path, outfile_path):
-    """
-    Generates docstrings for the entire all_functions dataset
-
-    Input: seq2seq_inf object, path to all_functions dataset, path to output folder
-    Returns: -----
-    Output: file of all generated docstrings for input dataset. generated_docstrings.docstring
-
-    Author: Tyler Medlin
-
-    """
-    #read in function file
-    loadpath = Path(all_functions_path)
-    with open(loadpath/'all_functions.function') as in_file:
-      lineList = in_file.readlines()
-
-    #create and open output file
-    loadpath = Path(outfile_path)
-    out_file= open(loadpath/"generated_docstrings.docstring","w+")
-
-    #write summaries to out file
-    for line in lineList:
-        out_file.write(summarize_function(code_summarizer, line) + '\n')
-
-    #close out file
-    out_file.close()
