@@ -1,3 +1,27 @@
+# MIT License
+#
+# Copyright (c) 2018 Hamel Husain
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+#SCoRe modified lines commented throughout
+
 from pathlib import Path
 import logging
 from typing import List, Any
@@ -5,6 +29,7 @@ from tqdm import tqdm_notebook
 from keras.preprocessing.sequence import pad_sequences
 import torch
 import spacy
+#SCoRe changes lines 8-12
 from tools.ai_reqs.text import *
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -25,6 +50,7 @@ def _dd():
 
 def load_lm_vocab(lm_vocab_file: str):
     """load vm_vocab object."""
+    #SCoRe change line 30
     with open(Path("tools/").joinpath(lm_vocab_file), 'rb') as f:
         info = pickle.load(f)
 
@@ -64,6 +90,7 @@ class lm_vocab:
 
     def fit(self, data: List) -> None:
         "Fit vocabulary to a list of documents."
+        #SCoRe change line 70
         #logging.warning(f'Processing {len(data):,} rows')
         # build vocab
         trn = list_flatten([(self.bos_token + ' ' + x).split() for x in data])
@@ -114,6 +141,7 @@ class lm_vocab:
             The maximum length of any sequence allowed.  Sequences will be truncated
             and pre-padded to this length.
         """
+        #SCoRe change line 121
         #logging.warning(f'Processing {len(data):,} rows')
         idx_docs = [[self.stoi[self.bos_token]] + [self.stoi[word] for word in sent.split()[:max_seq_len]] for sent in data]
         # default keras pad_sequences pre-pads to max length with zero
@@ -286,6 +314,7 @@ def tokenize_docstring(text):
     tokens = EN.tokenizer(text)
     return [token.text.lower() for token in tokens if not token.is_space]
 
+#SCoRe addition lines 294-298
 def stopword_tokenization(text): #SCoRe Addition
     "Apply tokenization to a string by removing stopwords"
     nltk_stop_words = set(stopwords.words('english')) #Gathers stopwords corpus
@@ -326,6 +355,7 @@ class Query2Emb:
     def emb_cat(self, str_inp):
         return np.concatenate([self.emb_mean(str_inp), self.emb_max(str_inp), self.emb_last(str_inp)], axis=1)
 
+    #SCoRe addition lines 335-337
     def get_keywords(self, str_inp): #SCoRe Addition
         plain_str = ' '.join(stopword_tokenization(str_inp))
         return plain_str

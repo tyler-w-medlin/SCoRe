@@ -29,10 +29,8 @@ class SearchEngine:
 
         self.query2emb = query2emb
 
-        # print(self.docstring_data[0])
-        # print(self.function_data[0])
 
-    def search(self, str_search, k=3): #k is number of search results returned  
+    def search(self, str_search, k=3): #k is number of search results returned
         """
             searches database using input search string. Returns top 3 most
             relevant results and their corresponding keywords, and the cosine
@@ -46,7 +44,6 @@ class SearchEngine:
         idxs, dists = self.search_index.knnQuery(query, k=k)
 
         return (idxs, dists)
-
 
 
 def load_se(datasetidx_path, lang_encoder):
@@ -78,8 +75,6 @@ def build_search_index(docstring_emb_path, search_index_path):
     dataset_embedding = np.load(docstring_emb_path + '/dataset_embedding.npy') #docstring embeddings
 
     # Build search index
-    # (takes about an hour on a p3.8xlarge)
-    # ^ that is a dirty lie. You can do it. Just believe.
     dataset_searchindex = create_nmslib_search_index(dataset_embedding)
 
     # Save search index

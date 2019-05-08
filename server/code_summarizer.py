@@ -17,6 +17,8 @@ def load_summarizer(seq2seq_model_path, text_processor_path):
 
     Returns: Seq2Seq_Inference object
 
+    Author: Tyler Medlin
+
     """
     #the code from the GitHub team has a LOT of soon to be depricated functions
     #suppress the depricated warnings
@@ -52,6 +54,8 @@ def summarize_function(seq2seq_inf, input_code):
     Input: Seq2Seq_Inference object, input code string
     Returns: predicted docstring
 
+    Author: Tyler Medlin
+
     """
     emb, gen_docstring = seq2seq_inf.predict(input_code)
     return gen_docstring
@@ -63,6 +67,8 @@ def summarize_dataset(code_summarizer, all_functions_path, outfile_path):
     Input: seq2seq_inf object, path to all_functions dataset, path to output folder
     Returns: -----
     Output: file of all generated docstrings for input dataset. generated_docstrings.docstring
+
+    Author: Tyler Medlin
 
     """
     #read in function file
