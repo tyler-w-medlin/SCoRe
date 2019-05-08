@@ -4,21 +4,23 @@ from keras.backend import clear_session
 #these import locations will likely change
 import numpy as np
 from code_summarizer import summarize_function
-from language_encoder import encode
+from tools.l2_language_encoder import code2emb
 
 class SCoRer(object):
     def __init__(self,
                  code_summarizer,
                  lang_encoder,
                  search_index,
-                 graph):
+                 graph,
+                 levelTwo):
 
         self.code_summarizer = code_summarizer
         self.lang_encoder = lang_encoder
         self.search_index = search_index
         self.graph = graph
+        self.levelTwo = levelTwo
 
-    def search(self, str_search, k=3):  # k is number of search results returned
+    def search(self, str_search, k=25):  # k is number of search results returned
         """
             searches database using input search string. Returns top 3 most
             relevant results and their corresponding keywords, and the cosine
@@ -57,7 +59,8 @@ class SCoRer(object):
             if len(args) == 1 and isinstance(args[0], str) and file == False:
                 #CASE code snippet, no docstring
                 emb, docstring = self.code_summarizer.predict(args[0])
-                vectorization = self.lang_encoder.emb_mean(docstring)
+                vectorization = self.levelTwo.code2emb(args[0])
+                # vectorization = self.lang_encoder.emb_mean(docstring)
                 data_dict =	{
                     "code_snippet": args[0],
                     "docstring": docstring,
@@ -76,8 +79,11 @@ class SCoRer(object):
                     #generate docstring if the function doesn't have one
                     if dict["docstring"] == '':
                         dict["docstring"] = summarize_function(self.code_summarizer, dict["raw_code"])
+                        vectorization = self.levelTwo.code2emb(dict["raw_code"])
+                        # vectorization = self.lang_encoder.emb_mean(dict["docstring"])
+                    else:
                     #vectorize docstring
-                    vectorization = self.lang_encoder.emb_mean(dict["docstring"])
+                        vectorization = self.lang_encoder.emb_mean(dict["docstring"])
                     #append the new dict to the list of dictionaries
                     data_dict_list.append({
                         "code_snippet": dict["raw_code"],
